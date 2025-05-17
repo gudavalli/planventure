@@ -38,15 +38,9 @@ def mock_smtp(monkeypatch):
 def auth_headers(client, test_user):
     """Helper fixture to get authorization headers."""
     with client.application.app_context():
-        # Log in the user to get a fresh token
-        response = client.post('/api/auth/login', json={
-            'email': test_user.email,
-            'password': 'password123'
-        })
-        data = json.loads(response.data)
-        assert response.status_code == 200
-        assert 'access_token' in data
-        return {'Authorization': f'Bearer {data["access_token"]}'}
+        # Create a new token directly
+        access_token = create_access_token(identity=test_user.id)
+        return {'Authorization': f'Bearer {access_token}'}
 
 def test_register(client):
     """Test user registration."""

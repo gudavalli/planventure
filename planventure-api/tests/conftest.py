@@ -45,6 +45,8 @@ def test_user(app):
         db.session.add(user)
         db.session.commit()
         
-        # Ensure the user is attached to the session
-        db.session.refresh(user)
-        return user
+        # Get a fresh user instance to ensure the ID is properly set
+        fresh_user = db.session.get(User, user.id)
+        assert fresh_user is not None
+        assert fresh_user.id is not None
+        return fresh_user
