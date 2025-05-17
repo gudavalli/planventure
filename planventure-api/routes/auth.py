@@ -36,39 +36,49 @@ def register():
 def login():
     """Login user and return access token."""
     data = request.get_json()
-    
     if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Email and password are required'}), 400
     
     user = User.query.filter_by(email=data['email']).first()
-    
     if not user or not user.check_password(data['password']):
         return jsonify({'error': 'Invalid email or password'}), 401
-      # Update last login time
+
+    # Update last login time
     user.last_login = datetime.now(UTC)
     db.session.commit()
-    
-    # Generate access token
-    access_token = create_access_token(
-        identity=user.id,
-        expires_delta=timedelta(days=1)
-    )
-    
-    return jsonify({
-        'access_token': access_token,
-        'user': user.to_dict()
-    }), 200
+
+    # Generate access token with fresh=True to ensure it's a new login
+    try:
+        access_token = create_access_token(
+            identity=str(user.id),  # Convert to string to ensure valid JWT subject
+            expires_delta=timedelta(days=1),
+            fresh=True
+        )
+        
+        return jsonify({
+            'access_token': access_token,
+            'token_type': 'Bearer',
+            'user': user.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({'error': 'Token generation failed', 'details': str(e)}), 500
 
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
     """Get current user details."""
     identity = get_jwt_identity()
-    user = db.session.get(User, identity)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-        
-    return jsonify(user.to_dict()), 200
+    if identity is None:
+        return jsonify({'error': 'Invalid token'}), 401
+    
+    try:
+        user = db.session.execute(db.select(User).filter_by(id=identity)).scalar_one_or_none()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        return jsonify(user.to_dict()), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to get user info', 'details': str(e)}), 500
 
 @auth_bp.route('/verify-email/<token>', methods=['GET'])
 def verify_email(token):
@@ -133,26 +143,28 @@ def reset_password(token):
 def profile():
     """Get or update user profile."""
     identity = get_jwt_identity()
-    user = db.session.get(User, identity)
-    
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    
-    if request.method == 'GET':
-        return jsonify(user.to_dict()), 200
-    
-    # Handle PUT request
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-    
-    # Update allowed fields
-    allowed_fields = ['first_name', 'last_name', 'phone']
-    for field in allowed_fields:
-        if field in data:
-            setattr(user, field, data[field])
+    if identity is None:
+        return jsonify({'error': 'Invalid token'}), 401
     
     try:
+        user = db.session.execute(db.select(User).filter_by(id=identity)).scalar_one_or_none()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        if request.method == 'GET':
+            return jsonify(user.to_dict()), 200
+        
+        # Handle PUT request
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Update allowed fields
+        allowed_fields = ['first_name', 'last_name', 'phone']
+        for field in allowed_fields:
+            if field in data:
+                setattr(user, field, data[field])
+        
         db.session.commit()
         return jsonify({
             'message': 'Profile updated successfully',

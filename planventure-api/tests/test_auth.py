@@ -37,10 +37,15 @@ def mock_smtp(monkeypatch):
 @pytest.fixture
 def auth_headers(client, test_user):
     """Helper fixture to get authorization headers."""
-    with client.application.app_context():
-        # Create a new token directly
-        access_token = create_access_token(identity=test_user.id)
-        return {'Authorization': f'Bearer {access_token}'}
+    # First log in to get a valid token from the app's JWT manager
+    response = client.post('/api/auth/login', json={
+        'email': test_user.email,
+        'password': 'password123'
+    })
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert 'access_token' in data
+    return {'Authorization': f'Bearer {data["access_token"]}'}
 
 def test_register(client):
     """Test user registration."""
@@ -66,6 +71,9 @@ def test_register_duplicate_email(client, test_user):
 
 def test_login_success(client, test_user):
     """Test successful login."""
+    # Set a strong secret key for testing
+    client.application.config['JWT_SECRET_KEY'] = 'this-is-a-secret-key-for-testing-32-bytes'
+    
     response = client.post('/api/auth/login', json={
         'email': 'test@example.com',
         'password': 'password123'
@@ -73,6 +81,13 @@ def test_login_success(client, test_user):
     assert response.status_code == 200
     data = json.loads(response.data)
     assert 'access_token' in data
+    print(f"\n=== Login Response ===")
+    print(f"Status code: {response.status_code}")
+    print(f"Access token: {data['access_token']}")
+    print(f"Token type: {data.get('token_type', 'Not specified')}")
+    print(f"User info: {data.get('user', {})}")
+    print(f"JWT Secret Key: {client.application.config['JWT_SECRET_KEY']}")
+    print("====================")
 
 def test_login_invalid_credentials(client):
     """Test login with invalid credentials."""

@@ -10,11 +10,13 @@ def app():
     app.config.update({
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
-        'JWT_SECRET_KEY': 'test-secret-key',
+        'JWT_SECRET_KEY': 'this-is-a-secret-key-for-testing-32-bytes',
         'JWT_ACCESS_TOKEN_EXPIRES': timedelta(hours=1),
         'JWT_ERROR_MESSAGE_KEY': 'message',
         'JWT_TOKEN_LOCATION': ['headers'],
-        'JWT_HEADER_TYPE': 'Bearer'
+        'JWT_HEADER_TYPE': 'Bearer',
+        'JWT_ALGORITHM': 'HS256',
+        'JWT_IDENTITY_CLAIM': 'sub'
     })
 
     # Create the database and the database tables
@@ -22,6 +24,15 @@ def app():
         db.create_all()
         yield app
         db.drop_all()
+
+@pytest.fixture(autouse=True)
+def cleanup_database(app):
+    """Clean up database before each test."""
+    with app.app_context():
+        # Clean up all tables
+        db.drop_all()
+        db.create_all()
+        yield
 
 @pytest.fixture
 def client(app):

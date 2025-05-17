@@ -9,14 +9,16 @@ load_dotenv()
 
 class Config:
     """Base config."""
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'this-is-a-very-long-secret-key-at-least-32-bytes')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///planventure.db')
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'dev-jwt-secret')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'this-is-a-secret-key-for-jwt-at-least-32-bytes-long')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
     JWT_ERROR_MESSAGE_KEY = 'message'  # Use consistent error message key
     JWT_TOKEN_LOCATION = ['headers']
     JWT_HEADER_TYPE = 'Bearer'
+    JWT_ALGORITHM = 'HS256'  # Explicitly set the algorithm
+    JWT_IDENTITY_CLAIM = 'sub'  # Ensure consistent identity claim
     
     # Email settings
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
@@ -69,4 +71,4 @@ def create_app(config_class=DevConfig):
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
