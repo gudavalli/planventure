@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, UTC
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import db
+from extensions import db
 
 class User(db.Model):
     """User model for authentication and user management."""

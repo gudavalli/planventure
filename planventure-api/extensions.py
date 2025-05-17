@@ -3,40 +3,8 @@ from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from models.user import User
 
 # Initialize extensions
 db = SQLAlchemy()
 jwt = JWTManager()
 cors = CORS()
-
-@jwt.invalid_token_loader
-def invalid_token_callback(error):
-    """Handle invalid token errors."""
-    return jsonify({'error': 'Invalid token'}), 401
-
-@jwt.expired_token_loader
-def expired_token_callback(jwt_header, jwt_data):
-    """Handle expired token errors."""
-    return jsonify({'error': 'Token has expired'}), 401
-
-@jwt.unauthorized_loader
-def unauthorized_callback(error):
-    """Handle missing token errors."""
-    return jsonify({'error': 'Missing Authorization Header'}), 401
-
-@jwt.revoked_token_loader
-def revoked_token_callback(jwt_header, jwt_data):
-    """Handle revoked token errors."""
-    return jsonify({'error': 'Token has been revoked'}), 401
-
-@jwt.needs_fresh_token_loader
-def token_not_fresh_callback(jwt_header, jwt_data):
-    """Handle non-fresh token errors."""
-    return jsonify({'error': 'Fresh token required'}), 401
-
-@jwt.user_lookup_loader
-def load_user(jwt_header, jwt_data):
-    """Load user from JWT token."""
-    identity = jwt_data['sub']
-    return db.session.get(User, identity)

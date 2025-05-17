@@ -88,11 +88,14 @@ def verify_email(token):
     if not user:
         return jsonify({'error': 'Invalid verification token'}), 400
         
-    if user.verify_email(token):
-        db.session.commit()
-        return jsonify({'message': 'Email verified successfully'}), 200
-    
-    return jsonify({'error': 'Invalid or expired token'}), 400
+    try:
+        if user.verify_email(token):
+            db.session.commit()
+            return jsonify({'message': 'Email verified successfully'}), 200
+        return jsonify({'error': 'Invalid or expired token'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to verify email', 'details': str(e)}), 500
 
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
@@ -102,19 +105,23 @@ def forgot_password():
     if not data or not data.get('email'):
         return jsonify({'error': 'Email is required'}), 400
         
-    user = User.query.filter_by(email=data['email']).first()
-    if not user:
-        # Don't reveal if email exists
-        return jsonify({'message': 'If the email exists, you will receive a reset link'}), 200
+    try:
+        user = User.query.filter_by(email=data['email']).first()
+        if not user:
+            # Don't reveal if email exists
+            return jsonify({'message': 'If the email exists, you will receive a reset link'}), 200
+            
+        token = user.generate_reset_token()
+        db.session.commit()
         
-    token = user.generate_reset_token()
-    db.session.commit()
-    
-    reset_url = f"{request.host_url.rstrip('/')}/reset-password/{token}"
-    if send_password_reset_email(user, reset_url):
-        return jsonify({'message': 'Password reset instructions sent'}), 200
-    
-    return jsonify({'error': 'Failed to send reset email'}), 500
+        reset_url = f"{request.host_url.rstrip('/')}/reset-password/{token}"
+        if send_password_reset_email(user, reset_url):
+            return jsonify({'message': 'Password reset instructions sent'}), 200
+        
+        return jsonify({'error': 'Failed to send reset email'}), 500
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to process request', 'details': str(e)}), 500
 
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
@@ -124,19 +131,23 @@ def reset_password(token):
     if not data or not data.get('password'):
         return jsonify({'error': 'New password is required'}), 400
         
-    user = db.session.query(User).filter_by(reset_token=token).first()
-    if not user:
-        return jsonify({'error': 'Invalid or expired reset token'}), 400
+    try:
+        user = db.session.query(User).filter_by(reset_token=token).first()
+        if not user:
+            return jsonify({'error': 'Invalid or expired reset token'}), 400
 
-    if not user.verify_reset_token(token):
-        return jsonify({'error': 'Invalid or expired reset token'}), 400
+        if not user.verify_reset_token(token):
+            return jsonify({'error': 'Invalid or expired reset token'}), 400
+            
+        user.set_password(data['password'])
+        user.reset_token = None
+        user.reset_token_expires = None
+        db.session.commit()
         
-    user.set_password(data['password'])
-    user.reset_token = None
-    user.reset_token_expires = None
-    db.session.commit()
-    
-    return jsonify({'message': 'Password reset successful'}), 200
+        return jsonify({'message': 'Password reset successful'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to reset password', 'details': str(e)}), 500
 
 @auth_bp.route('/profile', methods=['GET', 'PUT'])
 @jwt_required()
@@ -166,10 +177,8 @@ def profile():
                 setattr(user, field, data[field])
         
         db.session.commit()
-        return jsonify({
-            'message': 'Profile updated successfully',
-            'user': user.to_dict()
-        }), 200
+        user_data = user.to_dict()
+        return jsonify(user_data), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to update profile', 'details': str(e)}), 500
@@ -179,19 +188,22 @@ def profile():
 def change_password():
     """Change user password."""
     current_user_id = get_jwt_identity()
-    user = db.session.get(User, current_user_id)
-    
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    
-    data = request.get_json()
-    if not data or not data.get('current_password') or not data.get('new_password'):
-        return jsonify({'error': 'Current and new password are required'}), 400
-    
-    if not user.check_password(data['current_password']):
-        return jsonify({'error': 'Current password is incorrect'}), 401
-    
-    user.set_password(data['new_password'])
-    db.session.commit()
-    
-    return jsonify({'message': 'Password changed successfully'}), 200
+    try:
+        user = db.session.get(User, current_user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        data = request.get_json()
+        if not data or not data.get('current_password') or not data.get('new_password'):
+            return jsonify({'error': 'Current and new password are required'}), 400
+        
+        if not user.check_password(data['current_password']):
+            return jsonify({'error': 'Current password is incorrect'}), 401
+        
+        user.set_password(data['new_password'])
+        db.session.commit()
+        
+        return jsonify({'message': 'Password changed successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to change password', 'details': str(e)}), 500

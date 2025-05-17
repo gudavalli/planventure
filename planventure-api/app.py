@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 from flask import Flask, jsonify
 from dotenv import load_dotenv
-from utils import db, jwt, cors
+from extensions import db, jwt, cors
 
 # Load environment variables
 load_dotenv()
