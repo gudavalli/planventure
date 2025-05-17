@@ -1,14 +1,24 @@
-"""Shared extensions for the application."""
-from flask import jsonify
-from flask_sqlalchemy import SQLAlchemy
+"""JWT initialization."""
 from flask_jwt_extended import JWTManager
-from flask_cors import CORS
-from models.user import User
+from models import User, db
+from flask import jsonify
 
-# Initialize extensions
-db = SQLAlchemy()
 jwt = JWTManager()
-cors = CORS()
+
+@jwt.user_identity_loader
+def user_identity_lookup(user):
+    """Convert user object to JSON serializable format."""
+    return user.id if hasattr(user, 'id') else user
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    """Load user from database using JWT identity."""
+    identity = jwt_data["sub"]
+    if identity:
+        user = db.session.get(User, identity)
+        if user:
+            return db.session.merge(user)
+    return None
 
 @jwt.invalid_token_loader
 def invalid_token_callback(error):
@@ -16,7 +26,7 @@ def invalid_token_callback(error):
     return jsonify({'error': 'Invalid token'}), 401
 
 @jwt.expired_token_loader
-def expired_token_callback(jwt_header, jwt_data):
+def expired_token_callback(_jwt_header, _jwt_data):
     """Handle expired token errors."""
     return jsonify({'error': 'Token has expired'}), 401
 
@@ -26,17 +36,11 @@ def unauthorized_callback(error):
     return jsonify({'error': 'Missing Authorization Header'}), 401
 
 @jwt.revoked_token_loader
-def revoked_token_callback(jwt_header, jwt_data):
+def revoked_token_callback(_jwt_header, _jwt_data):
     """Handle revoked token errors."""
     return jsonify({'error': 'Token has been revoked'}), 401
 
 @jwt.needs_fresh_token_loader
-def token_not_fresh_callback(jwt_header, jwt_data):
+def token_not_fresh_callback(_jwt_header, _jwt_data):
     """Handle non-fresh token errors."""
     return jsonify({'error': 'Fresh token required'}), 401
-
-@jwt.user_lookup_loader
-def load_user(jwt_header, jwt_data):
-    """Load user from JWT token."""
-    identity = jwt_data['sub']
-    return db.session.get(User, identity)

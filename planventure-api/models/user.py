@@ -1,11 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
-from extensions import db
+from utils import db
 
 class User(db.Model):
-    """User model for authentication and user management."""
-    __abstract__ = False
     """User model for authentication and user management."""
     __tablename__ = 'users'
 
@@ -24,8 +22,8 @@ class User(db.Model):
     phone = db.Column(db.String(20))
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # Verification and reset tokens
     verification_token = db.Column(db.String(100), unique=True)
@@ -49,32 +47,38 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_verification_token(self):
-        """Generate email verification token."""
+        """Generate verification token for email verification."""
         self.verification_token = secrets.token_urlsafe(32)
-        self.verification_token_expires = datetime.utcnow() + timedelta(hours=24)
-
-    def generate_reset_token(self):
-        """Generate password reset token."""
-        self.reset_token = secrets.token_urlsafe(32)
-        self.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
-        return self.reset_token
+        self.verification_token_expires = datetime.now(UTC)
 
     def verify_email(self, token):
-        """Verify user's email with token."""
-        if (self.verification_token and 
-            self.verification_token == token and 
-            self.verification_token_expires > datetime.utcnow()):
+        """Verify email with token."""
+        now = datetime.now(UTC)
+        token_expires = self.verification_token_expires.replace(tzinfo=UTC) if self.verification_token_expires else None
+        
+        if (token == self.verification_token and 
+            token_expires and 
+            token_expires > now):
             self.is_verified = True
             self.verification_token = None
             self.verification_token_expires = None
             return True
         return False
 
+    def generate_reset_token(self):
+        """Generate password reset token."""
+        self.reset_token = secrets.token_urlsafe(32)
+        self.reset_token_expires = datetime.now(UTC) + timedelta(hours=1)
+        return self.reset_token
+
     def verify_reset_token(self, token):
         """Verify password reset token."""
-        if (self.reset_token and 
-            self.reset_token == token and 
-            self.reset_token_expires > datetime.utcnow()):
+        now = datetime.now(UTC)
+        token_expires = self.reset_token_expires.replace(tzinfo=UTC) if self.reset_token_expires else None
+        
+        if (token == self.reset_token and
+            token_expires and
+            token_expires > now):
             return True
         return False
 
@@ -93,6 +97,6 @@ class User(db.Model):
             'last_name': self.last_name,
             'phone': self.phone,
             'last_login': self.last_login.isoformat() if self.last_login else None,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from flask import Blueprint, request, jsonify, url_for, current_app
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from app import db
@@ -44,9 +44,8 @@ def login():
     
     if not user or not user.check_password(data['password']):
         return jsonify({'error': 'Invalid email or password'}), 401
-    
-    # Update last login time
-    user.last_login = datetime.utcnow()
+      # Update last login time
+    user.last_login = datetime.now(UTC)
     db.session.commit()
     
     # Generate access token
@@ -64,9 +63,8 @@ def login():
 @jwt_required()
 def get_current_user():
     """Get current user details."""
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    
+    identity = get_jwt_identity()
+    user = db.session.get(User, identity)
     if not user:
         return jsonify({'error': 'User not found'}), 404
         
@@ -116,8 +114,11 @@ def reset_password(token):
     if not data or not data.get('password'):
         return jsonify({'error': 'New password is required'}), 400
         
-    user = User.query.filter_by(reset_token=token).first()
-    if not user or not user.verify_reset_token(token):
+    user = db.session.query(User).filter_by(reset_token=token).first()
+    if not user:
+        return jsonify({'error': 'Invalid or expired reset token'}), 400
+
+    if not user.verify_reset_token(token):
         return jsonify({'error': 'Invalid or expired reset token'}), 400
         
     user.set_password(data['password'])
@@ -131,8 +132,8 @@ def reset_password(token):
 @jwt_required()
 def profile():
     """Get or update user profile."""
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    identity = get_jwt_identity()
+    user = db.session.get(User, identity)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -166,7 +167,7 @@ def profile():
 def change_password():
     """Change user password."""
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    user = db.session.get(User, current_user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404

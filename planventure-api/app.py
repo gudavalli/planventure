@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 from flask import Flask, jsonify
 from dotenv import load_dotenv
-from extensions import db, jwt, cors
+from utils import db, jwt, cors
 
 # Load environment variables
 load_dotenv()
@@ -14,6 +14,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///planventure.db')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'dev-jwt-secret')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
+    JWT_ERROR_MESSAGE_KEY = 'message'  # Use consistent error message key
+    JWT_TOKEN_LOCATION = ['headers']
+    JWT_HEADER_TYPE = 'Bearer'
     
     # Email settings
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
