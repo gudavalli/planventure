@@ -1,58 +1,13 @@
-# Planventure API 🚁
+# Walkthrough Template
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/github-samples/planventure)
+This repository serves as a template for creating a walkthrough. Follow the steps below to get started.
 
-A Flask-based REST API backend for the Planventure application.
+## Getting Started
 
-## Prerequisites
-Before you begin, ensure you have the following:
-
-- A GitHub account - [sign up for FREE](https://github.com)
-- Access to GitHub Copilot - [sign up for FREE](https://gh.io/gfb-copilot)!
-- A Code Editor - [VS Code](https://code.visualstudio.com/download) is recommended
-- API Client (like [Bruno](https://github.com/usebruno/bruno))
-- Git - [Download & Install Git](https://git-scm.com/downloads)
-
-## 🚀 Getting Started
-
-## Build along in a Codespace
-
-1. Click the "Open in GitHub Codespaces" button above to start developing in a GitHub Codespace.
-
-### Local Development Setup
-
-If you prefer to develop locally, follow the steps below:
-
-1.Fork and clone the repository and navigate to the [planventue-api](/planventure-api/) directory:
-```sh
-cd planventure-api
-```
-
-2. Create a virtual environment and activate it:
-```sh
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install the required dependencies:
-```sh
-pip install -r requirements.txt
-```
-
-4. Create an `.env` file based on [.sample.env](/planventure-api/.sample.env):
-```sh
-cp .sample.env .env
-```
-
-5. Start the Flask development server:
-```sh
-flask run
-```
-
-## 📚 API Endpoints
-- GET / - Welcome message
-- GET /health - Health check endpoint
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Clone this repository.
+2. Update the documentation in the `docs` folder (including the `README.md` folder).
+3. Customize the code and other content as needed.
+4. Update the `SUPPORT.md` file with the appropriate information.
+5. Review the default LICENSE (MIT), CODE_OF_CONDUCT, and CONTRIBUTING files to ensure they meet your needs. These use the samples provided as part of the OSPO release process.
+6. Update the `README.md` file in the repository root with the appropriate information. You can find an example at [github-samples/game-of-life-walkthrough](https://github.com/github-samples/game-of-life-walkthrough).
+7. When you are ready to publish the repository, please make sure that the Git history is clean. Then, raise an issue for a 'sample release' at [https://github.com/github/open-source-releases](https://github.com/github/open-source-releases).
