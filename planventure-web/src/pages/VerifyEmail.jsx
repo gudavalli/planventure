@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { authService } from '../services/api';
+import FormError from '../components/FormError';
 import toast from 'react-hot-toast';
 
 const VerifyEmail = () => {
   const { token } = useParams();
   const [status, setStatus] = useState('verifying'); // verifying, success, error
-
+  const [verifyError, setVerifyError] = useState('');
   useEffect(() => {
     const verifyEmail = async () => {
       try {
@@ -15,7 +16,19 @@ const VerifyEmail = () => {
         toast.success('Email verified successfully');
       } catch (error) {
         setStatus('error');
-        toast.error(error.response?.data?.error || 'Failed to verify email');
+        // Set specific error message based on error type
+        if (!navigator.onLine) {
+          setVerifyError('Network connection error. Please check your internet connection and try again.');
+        } else if (error.message === 'Network Error') {
+          setVerifyError('Unable to connect to the server. Please try again later.');
+        } else if (error.response?.status === 400) {
+          setVerifyError('Invalid verification token. Please request a new verification email.');
+        } else if (error.response?.status === 404) {
+          setVerifyError('The verification link has expired or is invalid.');
+        } else {
+          setVerifyError(error.response?.data?.error || 'Failed to verify email. Please try again.');
+        }
+        toast.error('Email verification failed');
       }
     };
 
@@ -69,12 +82,11 @@ const VerifyEmail = () => {
                   <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
                 </svg>
               </div>
-            </div>
-            <h3 className="h5 mb-2">
+            </div>            <h3 className="h5 mb-2">
               Verification failed
             </h3>
             <p className="text-muted mb-4">
-              The verification link may have expired or is invalid.
+              {verifyError || 'The verification link may have expired or is invalid.'}
             </p>
             <Link
               to="/login"

@@ -65,3 +65,13 @@
 .bg-purple-light {
   background-color: rgba(126, 87, 194, 0.1);
 }
+
+/* Animation customization */
+.animate__animated.animate__shakeX {
+  --animate-duration: 0.5s;
+}
+
+/* Error styling */
+.alert-danger {
+  border-left: 4px solid var(--bs-danger);
+}

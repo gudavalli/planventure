@@ -2,6 +2,8 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 /* Import Bootstrap Icons */
 @import 'bootstrap-icons/font/bootstrap-icons.css';
+/* Import Animate.css for animations */
+@import 'animate.css/animate.min.css';
 /* Import custom styles */
 @import './styles/custom.css';
 

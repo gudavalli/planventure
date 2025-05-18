@@ -30,20 +30,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const data = await authService.login(credentials);
-      setUser(data.user);
+      const responseData = await authService.login(credentials);
+      setUser(responseData.user);
       toast.success('Login successful!');
       navigate('/dashboard');
       return true;
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Login failed');
+      const errorMessage = error.response?.status === 401 
+        ? 'Invalid email or password'
+        : error.response?.data?.error || 'Login failed. Please try again.';
+      
+      toast.error(errorMessage);
+      console.error('Login error details:', error);
       return false;
     }
   };
-
   const register = async (userData) => {
     try {
-      const data = await authService.register(userData);
+      await authService.register(userData);
       toast.success('Registration successful! Please verify your email.');
       navigate('/login');
       return true;
@@ -59,11 +63,10 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
     toast.success('Logged out successfully');
   };
-
   const updateProfile = async (userData) => {
     try {
-      const data = await authService.updateProfile(userData);
-      setUser(data.user);
+      const responseData = await authService.updateProfile(userData);
+      setUser(responseData.user);
       toast.success('Profile updated successfully');
       return true;
     } catch (error) {

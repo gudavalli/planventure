@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import FormError from '../components/FormError';
 
-const Register = () => {
-  const [formData, setFormData] = useState({
+const Register = () => {  const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
@@ -14,33 +14,60 @@ const Register = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [registerError, setRegisterError] = useState('');
   const { register } = useAuth();
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: '' }));
+    
+    // Clear registration error when user starts typing
+    if (registerError) {
+      setRegisterError('');
+    }
   };
-
   const validate = () => {
     const newErrors = {};
     if (!formData.firstName) newErrors.firstName = 'First name is required';
     if (!formData.lastName) newErrors.lastName = 'Last name is required';
+    
     if (!formData.email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid email address';
+    
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    else if (!/[A-Z]/.test(formData.password)) newErrors.password = 'Password must contain at least one uppercase letter';
+    else if (!/[0-9]/.test(formData.password)) newErrors.password = 'Password must contain at least one number';
+    
+    if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
+    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
+    setRegisterError('');
     setIsLoading(true);
     try {
-      await register(formData);
+      const success = await register(formData);
+      if (!success) {
+        setRegisterError('Registration failed. Please try again.');
+      }
+    } catch (error) {
+      // Handle different types of errors
+      if (!navigator.onLine) {
+        setRegisterError('Network connection error. Please check your internet connection.');
+      } else if (error.message === 'Network Error') {
+        setRegisterError('Unable to connect to the server. Please try again later.');
+      } else if (error.response?.data?.error?.includes('already exists')) {
+        setRegisterError('An account with this email already exists. Please try logging in instead.');
+      } else {
+        setRegisterError(error.response?.data?.error || 'An error occurred during registration. Please try again.');
+      }
+      console.error('Registration error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -51,11 +78,11 @@ const Register = () => {
       <div className="row justify-content-center w-100">
         <div className="col-md-8 col-lg-6">
           <div className="card shadow-sm">
-            <div className="card-body p-4">
-              <div className="text-center mb-4">
+            <div className="card-body p-4">              <div className="text-center mb-4">
                 <h2 className="h4 mb-2">Create your account</h2>
                 <p className="text-muted small">Fill out the form to get started</p>
               </div>
+                <FormError message={registerError} />
               
               <form onSubmit={handleSubmit}>
                 <div className="row g-3">

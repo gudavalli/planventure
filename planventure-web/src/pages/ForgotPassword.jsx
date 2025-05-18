@@ -3,24 +3,46 @@ import { Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import FormError from '../components/FormError';
 import toast from 'react-hot-toast';
 
-const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
+const ForgotPassword = () => {  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const validateEmail = () => {
+    if (!email) {
+      setEmailError('Email is required');
+      return false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) return;
+    if (!validateEmail()) return;
 
+    setResetError('');
     setIsLoading(true);
     try {
       await authService.forgotPassword(email);
       setEmailSent(true);
       toast.success('Password reset instructions sent to your email');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to send reset email');
+      // Handle different types of errors
+      if (!navigator.onLine) {
+        setResetError('Network connection error. Please check your internet connection.');
+      } else if (error.message === 'Network Error') {
+        setResetError('Unable to connect to the server. Please try again later.');
+      } else {
+        setResetError(error.response?.data?.error || 'Failed to send reset email. Please try again.');
+      }
+      toast.error('Failed to send reset email');
     } finally {
       setIsLoading(false);
     }
@@ -56,20 +78,26 @@ const ForgotPassword = () => {
       <div className="row justify-content-center w-100">
         <div className="col-md-6 col-lg-4">
           <div className="card shadow-sm">
-            <div className="card-body p-4">
-              <div className="text-center mb-4">
+            <div className="card-body p-4">              <div className="text-center mb-4">
                 <h2 className="h4 mb-2">Reset your password</h2>
                 <p className="text-muted small">
                   Enter your email address and we'll send you a link to reset your password.
                 </p>
               </div>
-              <form onSubmit={handleSubmit}>
-                <Input
+              
+              <FormError message={resetError} />
+              
+              <form onSubmit={handleSubmit}>                <Input
                   label="Email address"
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError('');
+                    setResetError('');
+                  }}
+                  error={emailError}
                 />
                 <Button
                   type="submit"
