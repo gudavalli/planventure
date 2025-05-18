@@ -25,28 +25,25 @@ const ForgotPassword = () => {
       setIsLoading(false);
     }
   };
-
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="rounded-md bg-green-50 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">Email sent</h3>
-                <p className="mt-2 text-sm text-green-700">
-                  Check your email for password reset instructions.
-                </p>
-              </div>
+      <div className="container py-5 d-flex align-items-center justify-content-center min-vh-100">
+        <div className="col-md-6 col-lg-4 text-center">
+          <div className="alert alert-success d-flex align-items-center" role="alert">
+            <div className="me-3">
+              <svg width="24" height="24" fill="currentColor" className="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+              </svg>
+            </div>
+            <div className="text-start">
+              <h5>Email sent</h5>
+              <p className="mb-0">
+                Check your email for password reset instructions.
+              </p>
             </div>
           </div>
           <div className="mt-4">
-            <Link to="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+            <Link to="/login" className="btn btn-link">
               Return to login
             </Link>
           </div>
@@ -54,42 +51,43 @@ const ForgotPassword = () => {
       </div>
     );
   }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your password.
-          </p>
+    <div className="container py-5 d-flex align-items-center justify-content-center min-vh-100">
+      <div className="row justify-content-center w-100">
+        <div className="col-md-6 col-lg-4">
+          <div className="card shadow-sm">
+            <div className="card-body p-4">
+              <div className="text-center mb-4">
+                <h2 className="h4 mb-2">Reset your password</h2>
+                <p className="text-muted small">
+                  Enter your email address and we'll send you a link to reset your password.
+                </p>
+              </div>
+              <form onSubmit={handleSubmit}>
+                <Input
+                  label="Email address"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-100 mb-3"
+                  isLoading={isLoading}
+                >
+                  Send reset link
+                </Button>
+                <div className="text-center">
+                  <Link to="/login" className="btn btn-link">
+                    Back to login
+                  </Link>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <Input
-            label="Email address"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <div>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              isLoading={isLoading}
-            >
-              Send reset link
-            </Button>
-          </div>
-          <div className="text-center">
-            <Link to="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-              Back to login
-            </Link>
-          </div>
-        </form>
       </div>
     </div>
   );

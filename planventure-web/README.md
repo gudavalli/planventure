@@ -1,11 +1,23 @@
-# React + Vite
+# PlanVenture Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern web application for travel planning and adventure management built with React, Vite, and Bootstrap.
 
-Currently, two official plugins are available:
+## Technologies
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [React](https://reactjs.org/) - Frontend library for building user interfaces
+- [Vite](https://vitejs.dev/) - Next generation frontend tooling
+- [Bootstrap 5](https://getbootstrap.com/) - Responsive CSS framework
+- [React Router](https://reactrouter.com/) - Routing library for React
+- [React Query](https://tanstack.com/query/latest) - Data fetching library
+
+## CSS Framework Migration
+
+This project was originally built with Tailwind CSS but has been migrated to Bootstrap 5 to provide:
+
+- More consistent UI components
+- Better accessibility
+- Improved desktop experience
+- Simplified styling system
 
 ## Expanding the ESLint configuration
 

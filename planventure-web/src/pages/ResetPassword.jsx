@@ -49,50 +49,49 @@ const ResetPassword = () => {
       setIsLoading(false);
     }
   };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your new password below.
-          </p>
+    <div className="container py-5 d-flex align-items-center justify-content-center min-vh-100">
+      <div className="row justify-content-center w-100">
+        <div className="col-md-6 col-lg-4">
+          <div className="card shadow-sm">
+            <div className="card-body p-4">
+              <div className="text-center mb-4">
+                <h2 className="h4 mb-2">Reset your password</h2>
+                <p className="text-muted small">
+                  Enter your new password below.
+                </p>
+              </div>
+              <form onSubmit={handleSubmit}>
+                <Input
+                  label="New Password"
+                  name="password"
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                />
+                <Input
+                  label="Confirm New Password"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  error={errors.confirmPassword}
+                />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-100 mt-3"
+                  isLoading={isLoading}
+                >
+                  Reset Password
+                </Button>
+              </form>
+            </div>
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <Input
-              label="New Password"
-              name="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-            />
-            <Input
-              label="Confirm New Password"
-              name="confirmPassword"
-              type="password"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              error={errors.confirmPassword}
-            />
-          </div>
-          <div>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              isLoading={isLoading}
-            >
-              Reset Password
-            </Button>
-          </div>
-        </form>
       </div>
     </div>
   );

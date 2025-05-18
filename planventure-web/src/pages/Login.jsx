@@ -40,65 +40,74 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <Input
-              label="Email address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-            />
-            <Input
-              label="Password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-            />
-          </div>
+    <div className="container py-5 d-flex flex-column align-items-center">
+      <div className="row justify-content-center w-100">
+        <div className="col-md-6 col-lg-4">
+          <div className="card shadow-sm">
+            <div className="card-body p-4">
+              <div className="text-center mb-4">
+                <h2 className="h4 mb-2">Sign in to your account</h2>
+                <p className="text-muted small">Enter your credentials to access your account</p>
+              </div>
+              
+              <form onSubmit={handleSubmit}>
+                <Input
+                  label="Email Address"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  error={errors.email}
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                />
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                Forgot your password?
-              </Link>
+                <Input
+                  label="Password"
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  autoComplete="current-password"
+                />
+
+                <div className="d-flex justify-content-between mb-3">
+                  <div className="form-check">
+                    <input 
+                      id="remember-me" 
+                      name="remember-me" 
+                      type="checkbox" 
+                      className="form-check-input" 
+                    />
+                    <label htmlFor="remember-me" className="form-check-label">
+                      Remember me
+                    </label>
+                  </div>
+                  <Link to="/forgot-password" className="small">
+                    Forgot password?
+                  </Link>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-100"
+                  isLoading={isLoading}
+                >
+                  Sign in
+                </Button>
+              </form>
+              
+              <div className="text-center mt-4">
+                <p className="mb-0 text-muted">
+                  Don't have an account?{' '}
+                  <Link to="/register">Sign up</Link>
+                </p>
+              </div>
             </div>
           </div>
-
-          <div>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              isLoading={isLoading}
-            >
-              Sign in
-            </Button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign up
-              </Link>
-            </p>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );

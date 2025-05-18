@@ -15,42 +15,39 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-100">
-          <Navigation />
-          <main className="container mx-auto px-4 py-8">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/verify-email/:token" element={<VerifyEmail />} />
-              
-              {/* Protected routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Redirect root to login */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              
-              {/* Catch all route - redirect to login */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-          </main>
+        <div className="min-vh-100 bg-light">
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            
+            {/* Protected routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Redirect root to login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            
+            {/* Catch all route - redirect to login */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
         </div>
       </AuthProvider>
     </Router>

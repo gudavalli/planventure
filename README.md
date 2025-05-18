@@ -1,13 +1,56 @@
-# Walkthrough Template
+# PlanVenture
 
-This repository serves as a template for creating a walkthrough. Follow the steps below to get started.
+PlanVenture is a modern travel planning and adventure management application consisting of a Flask backend API and a React frontend.
+
+## Project Structure
+
+- **planventure-api**: Flask-based REST API providing authentication and data services
+- **planventure-web**: React frontend application built with Bootstrap
+
+## Web Application
+
+The web application was recently migrated from Tailwind CSS to Bootstrap 5 to provide:
+
+- More consistent UI components with better accessibility
+- Improved desktop experience
+- Simplified styling system with established component patterns
+- Better maintainability and documentation
+
+### UI Components
+
+- Responsive navigation with dropdown menus
+- Form components with validation
+- Card-based dashboard layout
+- User authentication flows (login, register, password reset)
 
 ## Getting Started
 
-1. Clone this repository.
-2. Update the documentation in the `docs` folder (including the `README.md` folder).
-3. Customize the code and other content as needed.
-4. Update the `SUPPORT.md` file with the appropriate information.
-5. Review the default LICENSE (MIT), CODE_OF_CONDUCT, and CONTRIBUTING files to ensure they meet your needs. These use the samples provided as part of the OSPO release process.
-6. Update the `README.md` file in the repository root with the appropriate information. You can find an example at [github-samples/game-of-life-walkthrough](https://github.com/github-samples/game-of-life-walkthrough).
-7. When you are ready to publish the repository, please make sure that the Git history is clean. Then, raise an issue for a 'sample release' at [https://github.com/github/open-source-releases](https://github.com/github/open-source-releases).
+### Backend Setup
+
+```bash
+cd planventure-api
+pip install -r requirements.txt
+flask run
+```
+
+### Frontend Setup
+
+```bash
+cd planventure-web
+npm install
+npm run dev
+```
+
+## Technologies
+
+### Backend
+- Python Flask
+- SQLite database
+- JWT authentication
+
+### Frontend
+- React with hooks
+- Bootstrap 5 (migrated from Tailwind CSS)
+- React Router for navigation
+- React Query for data fetching
+- React Hot Toast for notifications

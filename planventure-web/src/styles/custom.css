@@ -1,0 +1,67 @@
+/* 
+ * Custom styles for PlanVenture
+ * This file contains additional styles beyond Bootstrap's defaults
+ */
+
+/* Primary colors */
+:root {
+  --pv-primary: #7e57c2; /* Purple for primary branding */
+  --pv-secondary: #5e35b1;
+  --pv-light: #f8f9fa;
+  --pv-dark: #212529;
+}
+
+/* Custom button styles */
+.btn-primary {
+  background-color: var(--pv-primary);
+  border-color: var(--pv-primary);
+}
+
+.btn-primary:hover, 
+.btn-primary:active, 
+.btn-primary:focus {
+  background-color: var(--pv-secondary) !important;
+  border-color: var(--pv-secondary) !important;
+}
+
+/* Custom card styles */
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  border-top-left-radius: 0.5rem !important;
+  border-top-right-radius: 0.5rem !important;
+}
+
+/* Form controls */
+.form-control:focus {
+  border-color: var(--pv-primary);
+  box-shadow: 0 0 0 0.25rem rgba(126, 87, 194, 0.25);
+}
+
+/* Navigation customization */
+.navbar-light .navbar-brand,
+.navbar-light .navbar-nav .nav-link.active {
+  color: var(--pv-primary);
+}
+
+/* Helper classes */
+.text-purple {
+  color: var(--pv-primary);
+}
+
+.bg-purple {
+  background-color: var(--pv-primary);
+  color: white;
+}
+
+.bg-purple-light {
+  background-color: rgba(126, 87, 194, 0.1);
+}

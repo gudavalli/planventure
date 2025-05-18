@@ -3,6 +3,7 @@ import Navigation from '../components/Navigation';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
@@ -33,16 +34,16 @@ const Profile = () => {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    try {
+    setIsLoading(true);    try {
       await updateProfile({
         first_name: formData.firstName,
         last_name: formData.lastName,
         phone: formData.phone,
       });
       toast.success('Profile updated successfully');
-    } catch (error) {
+    } catch (err) {
       toast.error('Failed to update profile');
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -85,120 +86,127 @@ const Profile = () => {
       setIsLoading(false);
     }
   };
-
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-vh-100 bg-light">
       <Navigation />
       
-      <main className="py-10">
-        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-          <div className="space-y-6">
-            {/* Profile Section */}
-            <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
-              <div className="md:grid md:grid-cols-3 md:gap-6">
-                <div className="md:col-span-1">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Profile</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Update your personal information.
-                  </p>
+      <div className="container py-4">
+        <div className="row justify-content-center">
+          <div className="col-lg-10">
+            <div className="mb-4">
+              <div className="card shadow-sm mb-4">
+                <div className="card-header bg-white py-3">
+                  <h5 className="mb-0">Profile Information</h5>
                 </div>
-                <div className="mt-5 md:col-span-2 md:mt-0">
-                  <form onSubmit={handleProfileSubmit}>
-                    <div className="grid grid-cols-6 gap-6">
-                      <div className="col-span-6 sm:col-span-3">
-                        <Input
-                          label="First Name"
-                          name="firstName"
-                          type="text"
-                          value={formData.firstName}
-                          onChange={handleProfileChange}
-                        />
-                      </div>
-                      <div className="col-span-6 sm:col-span-3">
-                        <Input
-                          label="Last Name"
-                          name="lastName"
-                          type="text"
-                          value={formData.lastName}
-                          onChange={handleProfileChange}
-                        />
-                      </div>
-                      <div className="col-span-6 sm:col-span-3">
-                        <Input
-                          label="Phone Number"
-                          name="phone"
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handleProfileChange}
-                        />
-                      </div>
+                <div className="card-body p-4">
+                  <div className="row">
+                    <div className="col-md-4 mb-4 mb-md-0">
+                      <h6>Personal Information</h6>
+                      <p className="text-muted small">
+                        Update your personal information.
+                      </p>
                     </div>
-                    <div className="mt-5 flex justify-end">
-                      <Button
-                        type="submit"
-                        isLoading={isLoading}
-                      >
-                        Save Changes
-                      </Button>
+                    <div className="col-md-8">
+                      <form onSubmit={handleProfileSubmit}>
+                        <div className="row">
+                          <div className="col-md-6">
+                            <Input
+                              label="First Name"
+                              name="firstName"
+                              type="text"
+                              value={formData.firstName}
+                              onChange={handleProfileChange}
+                            />
+                          </div>
+                          <div className="col-md-6">
+                            <Input
+                              label="Last Name"
+                              name="lastName"
+                              type="text"
+                              value={formData.lastName}
+                              onChange={handleProfileChange}
+                            />
+                          </div>
+                          <div className="col-md-6">
+                            <Input
+                              label="Phone Number"
+                              name="phone"
+                              type="tel"
+                              value={formData.phone}
+                              onChange={handleProfileChange}
+                            />
+                          </div>
+                        </div>
+                        <div className="d-flex justify-content-end">
+                          <Button
+                            type="submit"
+                            isLoading={isLoading}
+                          >
+                            Save Changes
+                          </Button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Password Section */}
-            <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
-              <div className="md:grid md:grid-cols-3 md:gap-6">
-                <div className="md:col-span-1">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Password</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Update your password.
-                  </p>
+              <div className="card shadow-sm">
+                <div className="card-header bg-white py-3">
+                  <h5 className="mb-0">Security</h5>
                 </div>
-                <div className="mt-5 md:col-span-2 md:mt-0">
-                  <form onSubmit={handlePasswordSubmit}>
-                    <div className="space-y-4">
-                      <Input
-                        label="Current Password"
-                        name="currentPassword"
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={handlePasswordChange}
-                        error={passwordErrors.currentPassword}
-                      />
-                      <Input
-                        label="New Password"
-                        name="newPassword"
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={handlePasswordChange}
-                        error={passwordErrors.newPassword}
-                      />
-                      <Input
-                        label="Confirm New Password"
-                        name="confirmPassword"
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={handlePasswordChange}
-                        error={passwordErrors.confirmPassword}
-                      />
+                <div className="card-body p-4">
+                  <div className="row">
+                    <div className="col-md-4 mb-4 mb-md-0">
+                      <h6>Password</h6>
+                      <p className="text-muted small">
+                        Update your password.
+                      </p>
                     </div>
-                    <div className="mt-5 flex justify-end">
-                      <Button
-                        type="submit"
-                        variant="secondary"
-                        isLoading={isLoading}
-                      >
-                        Change Password
-                      </Button>
+                    <div className="col-md-8">
+                      <form onSubmit={handlePasswordSubmit}>
+                        <Input
+                          label="Current Password"
+                          name="currentPassword"
+                          type="password"
+                          value={passwordData.currentPassword}
+                          onChange={handlePasswordChange}
+                          error={passwordErrors.currentPassword}
+                        />
+                        <Input
+                          label="New Password"
+                          name="newPassword"
+                          type="password"
+                          value={passwordData.newPassword}
+                          onChange={handlePasswordChange}
+                          error={passwordErrors.newPassword}
+                        />
+                        <Input
+                          label="Confirm New Password"
+                          name="confirmPassword"
+                          type="password"
+                          value={passwordData.confirmPassword}
+                          onChange={handlePasswordChange}
+                          error={passwordErrors.confirmPassword}
+                        />
+                        <div className="d-flex justify-content-end">
+                          <Button
+                            type="submit"
+                            variant="secondary"
+                            isLoading={isLoading}
+                          >
+                            Change Password
+                          </Button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
