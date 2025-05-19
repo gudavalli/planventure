@@ -1,0 +1,73 @@
+name: SQL Server Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'planventure-api/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'planventure-api/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: YourStrong@Passw0rd
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+    
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+        
+      - name: Install ODBC Driver
+        run: |
+          sudo curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          sudo curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+        
+      - name: Install dependencies
+        working-directory: planventure-api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-flask pytest-cov
+        
+      - name: Initialize database
+        working-directory: planventure-api
+        run: |
+          python init_db.py
+        
+      - name: Validate schema
+        working-directory: planventure-api
+        run: |
+          python validate_schema.py
+        
+      - name: Run tests
+        working-directory: planventure-api
+        run: |
+          python -m pytest -v
+        
+      - name: Run SQL Server specific tests
+        working-directory: planventure-api
+        run: |
+          python -m pytest tests/test_mssql_specific.py -v
