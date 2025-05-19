@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: planventure-mssql
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Developer  # Use Express for smaller footprint or Developer for full features
+      # - MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS  # Case-insensitive collation
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+      # Map a volume for backups
+      - ./sql/backups:/backups
+      # Map a volume for initialization scripts
+      - ./sql:/docker-entrypoint-initdb.d
+    command: 
+      - /bin/bash
+      - -c 
+      - |
+        /opt/mssql/bin/sqlservr &
+        sleep 30
+        for f in /docker-entrypoint-initdb.d/*.sql; do
+          echo "Processing $$f"
+          /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $$SA_PASSWORD -d master -i $$f
+        done
+        # Keep container running
+        tail -f /dev/null
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mssql-data:
+    driver: local

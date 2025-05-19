@@ -11,7 +11,16 @@ class Config:
     """Base config."""
     SECRET_KEY = os.environ.get('SECRET_KEY', 'this-is-a-very-long-secret-key-at-least-32-bytes')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///planventure.db')
+    # SQL Server connection string with connection pooling and encryption
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 
+        'mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure?driver=ODBC+Driver+17+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes')
+    # SQL Server connection pooling configuration
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': int(os.environ.get('DB_POOL_SIZE', 5)),  # Default pool size
+        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', 10)),  # Max connections above pool_size
+        'pool_timeout': int(os.environ.get('DB_POOL_TIMEOUT', 30)),  # Seconds to wait for connection
+        'pool_recycle': int(os.environ.get('DB_POOL_RECYCLE', 1800)),  # Recycle connections after 30 minutes
+    }
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'this-is-a-secret-key-for-jwt-at-least-32-bytes-long')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
     JWT_ERROR_MESSAGE_KEY = 'message'  # Use consistent error message key
@@ -58,13 +67,47 @@ def create_app(config_class=DevConfig):
     
     @app.route('/')
     def home():
-        return jsonify({"message": "Welcome to PlanVenture API"})
-
-    @app.route('/health')
+        return jsonify({"message": "Welcome to PlanVenture API"})    @app.route('/health')
     def health_check():
+        """Health check endpoint with database connectivity verification."""
+        db_status = {
+            "status": "error",
+            "type": "unknown",
+            "details": None
+        }
+        
+        try:
+            # Execute a simple query to check database connectivity
+            result = db.session.execute('SELECT @@version').scalar()
+            
+            # Determine database type from the connection string
+            db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            if 'mssql' in db_url:
+                db_type = "Microsoft SQL Server"
+            elif 'sqlite' in db_url:
+                db_type = "SQLite"
+            else:
+                db_type = "Unknown"
+            
+            db_status = {
+                "status": "connected",
+                "type": db_type,
+                "version": result if result else "Unknown",
+                "details": None
+            }
+            
+        except Exception as e:
+            db_status = {
+                "status": "error",
+                "type": "Unknown",
+                "details": str(e)
+            }
+            
         return jsonify({
-            "status": "healthy",
-            "database": "connected" if db.engine.pool.checkedout() == 0 else "error"
+            "status": "healthy" if db_status["status"] == "connected" else "unhealthy",
+            "timestamp": datetime.now().isoformat(),
+            "database": db_status,
+            "api_version": "1.0.0"
         })
 
     return app

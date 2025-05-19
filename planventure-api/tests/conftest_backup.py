@@ -10,7 +10,7 @@ def app():
     app = create_app()
     app.config.update({
         'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': 'mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure_test?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes',
+        'SQLALCHEMY_DATABASE_URI': 'mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure_test?driver=ODBC+Driver+17+for+SQL+Server',
         'JWT_SECRET_KEY': 'this-is-a-secret-key-for-testing-32-bytes',
         'JWT_ACCESS_TOKEN_EXPIRES': timedelta(hours=1),
         'JWT_ERROR_MESSAGE_KEY': 'message',
@@ -53,8 +53,7 @@ def test_user(app):
             password='password123'
         )
         user.verification_token = 'test-verification-token'
-        user.verification_token_expires = datetime.now(UTC) + timedelta(hours=24)
-        db.session.add(user)
+        user.verification_token_expires = datetime.now(UTC) + timedelta(hours=24)        db.session.add(user)
         db.session.commit()
         
         # Get a fresh user instance to ensure the ID is properly set
@@ -91,14 +90,3 @@ def test_trip(test_user, app):
         assert fresh_trip is not None
         assert fresh_trip.id is not None
         return fresh_trip
-
-@pytest.fixture
-def auth_headers(app, test_user):
-    """Create authentication headers for the test user."""
-    with app.app_context():
-        from flask_jwt_extended import create_access_token
-        token = create_access_token(identity=test_user.id)
-        headers = {
-            'Authorization': f'Bearer {token}'
-        }
-        return headers

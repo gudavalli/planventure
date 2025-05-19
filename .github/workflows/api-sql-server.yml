@@ -1,0 +1,101 @@
+name: PlanVenture API CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+    - 'planventure-api/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+    - 'planventure-api/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run tests with SQL Server
+    runs-on: ubuntu-latest
+    
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: YourStrong@Passw0rd
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install ODBC Driver
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+        apt-get update
+        ACCEPT_EULA=Y apt-get install -y msodbcsql17
+      shell: sudo bash {0}
+    
+    - name: Install dependencies
+      working-directory: ./planventure-api
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pytest pytest-cov
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Initialize test database
+      working-directory: ./planventure-api
+      run: |
+        python -c "from init_db import init_database; init_database('planventure_test', False)"
+      env:
+        DB_SERVER: localhost,1433
+        DB_USERNAME: sa
+        DB_PASSWORD: YourStrong@Passw0rd
+        DB_NAME: planventure_test
+        DB_DRIVER: ODBC Driver 17 for SQL Server
+        SQLALCHEMY_DATABASE_URI: mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure_test?driver=ODBC+Driver+17+for+SQL+Server
+    
+    - name: Run tests
+      working-directory: ./planventure-api
+      run: |
+        pytest -v --cov=. --cov-report=xml
+      env:
+        DB_SERVER: localhost,1433
+        DB_USERNAME: sa
+        DB_PASSWORD: YourStrong@Passw0rd
+        DB_NAME: planventure_test
+        DB_DRIVER: ODBC Driver 17 for SQL Server
+        SQLALCHEMY_DATABASE_URI: mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure_test?driver=ODBC+Driver+17+for+SQL+Server
+        SECRET_KEY: this-is-a-test-secret-key-for-ci-cd-pipeline
+        JWT_SECRET_KEY: this-is-a-test-jwt-key-for-ci-cd-pipeline
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./planventure-api/coverage.xml
+        flags: unittests
+        name: codecov-planventure
+        fail_ci_if_error: false
+
+  deploy:
+    name: Deploy to production (if enabled)
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # This job would be enabled for actual deployment
+    # Commented out to prevent accidental deployments during development
+    steps:
+    - name: Placeholder for deployment
+      run: echo "Deployment would happen here if enabled"
