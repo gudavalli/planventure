@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from datetime import datetime
 from app import create_app, db
 from models.user import User
-from models.trip import Trip
 
 # Load environment variables
 load_dotenv()
@@ -19,30 +18,31 @@ def validate_migration():
     print("PlanVenture Account Service Migration Validation")
     print("====================================\n")
     
-    # Check if SQLite database exists
-    if not os.path.exists('instance/planventure.db'):
-        print("ERROR: SQLite database not found. Cannot validate migration.")
-        print("Please ensure the SQLite database is available for comparison.")
-        return False
+    # Get SQLite path
+    app = create_app()
+    sqlite_path = app.config.get("SQLALCHEMY_DATABASE_URI").replace("sqlite:///", "")
     
-    # Connect to SQLite database
-    print("Connecting to SQLite database...")
+    if not os.path.exists(sqlite_path):
+        print(f"ERROR: SQLite database not found at {sqlite_path}")
+        return False
+        
+    print(f"Using SQLite database: {sqlite_path}")
+    
     try:
-        sqlite_conn = sqlite3.connect('instance/planventure.db')
-        sqlite_conn.row_factory = sqlite3.Row
+        sqlite_conn = sqlite3.connect(sqlite_path)
         print("Connected successfully to SQLite database.")
     except Exception as e:
         print(f"ERROR: Failed to connect to SQLite database: {str(e)}")
         return False
     
-    # Connect to SQL Server
-    server = os.getenv('DB_SERVER', 'localhost,1433')
-    username = os.getenv('DB_USERNAME', 'sa')
-    password = os.getenv('DB_PASSWORD', 'YourStrong@Passw0rd')
-    database = os.getenv('DB_NAME', 'planventure')
-    driver = os.getenv('DB_DRIVER', 'ODBC Driver 17 for SQL Server')
+    # Get SQL Server connection details from environment
+    server = os.getenv("DB_SERVER", "localhost")
+    username = os.getenv("DB_USERNAME", "sa")
+    password = os.getenv("DB_PASSWORD", "YourStrong@Passw0rd")
+    database = os.getenv("DB_NAME", "planventure")
+    driver = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server")
     
-    conn_str = f'DRIVER={{{driver}}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+    conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
     
     print(f"Connecting to SQL Server at {server}...")
     try:
@@ -68,7 +68,7 @@ def validate_migration():
             try:
                 sqlite_cursor.execute("SELECT COUNT(*) FROM users")
             except sqlite3.OperationalError:
-                # Fallback to 'user' if 'users' doesn't exist
+                # Fallback to "user" if "users" doesn"t exist
                 sqlite_cursor.execute("SELECT COUNT(*) FROM user")
             
             sqlite_user_count = sqlite_cursor.fetchone()[0]
@@ -77,38 +77,11 @@ def validate_migration():
             mssql_user_count = mssql_cursor.fetchone()[0]
             
             print(f"Users: SQLite={sqlite_user_count}, SQL Server={mssql_user_count}")
-            
-            # Check trips
-            try:
-                sqlite_cursor.execute("SELECT COUNT(*) FROM trips")
-            except sqlite3.OperationalError:
-                # Fallback to 'trip' if 'trips' doesn't exist
-                try:
-                    sqlite_cursor.execute("SELECT COUNT(*) FROM trip")
-                except sqlite3.OperationalError:
-                    print("WARNING: Could not find trips table in SQLite database.")
-                    sqlite_trip_count = 0
-                else:
-                    sqlite_trip_count = sqlite_cursor.fetchone()[0]
-            else:
-                sqlite_trip_count = sqlite_cursor.fetchone()[0]
-            
-            try:
-                mssql_cursor.execute("SELECT COUNT(*) FROM trips")
-                mssql_trip_count = mssql_cursor.fetchone()[0]
-                print(f"Trips: SQLite={sqlite_trip_count}, SQL Server={mssql_trip_count}")
-            except:
-                print("WARNING: Could not find trips table in SQL Server database.")
                 
             if sqlite_user_count != mssql_user_count:
                 print("WARNING: User count mismatch between databases!")
             else:
                 print("SUCCESS: User count matches between databases.")
-                
-            if sqlite_trip_count and sqlite_trip_count != mssql_trip_count:
-                print("WARNING: Trip count mismatch between databases!")
-            elif sqlite_trip_count:
-                print("SUCCESS: Trip count matches between databases.")
                 
         except Exception as e:
             print(f"ERROR: Failed to compare record counts: {str(e)}")
@@ -120,68 +93,71 @@ def validate_migration():
             # Check a sample user
             sqlite_cursor.execute("SELECT email FROM users LIMIT 1")
             result = sqlite_cursor.fetchone()
-            if not result:
-                # Try the other table name
-                sqlite_cursor.execute("SELECT email FROM user LIMIT 1")
-                result = sqlite_cursor.fetchone()
-                
             if result:
                 sample_email = result[0]
-                print(f"Checking user with email: {sample_email}")
                 
-                # Check in SQL Server
-                mssql_cursor.execute("SELECT COUNT(*) FROM users WHERE email = ?", (sample_email,))
-                count = mssql_cursor.fetchone()[0]
+                mssql_cursor.execute(f"SELECT email FROM users WHERE email = ?", (sample_email,))
+                result = mssql_cursor.fetchone()
                 
-                if count > 0:
-                    print(f"SUCCESS: Found user {sample_email} in SQL Server database.")
+                if result and result[0] == sample_email:
+                    print(f"SUCCESS: Found matching user with email {sample_email}")
                 else:
-                    print(f"WARNING: User {sample_email} not found in SQL Server database.")
+                    print(f"WARNING: Could not find matching user with email {sample_email}")
             else:
-                print("No users found in SQLite database for comparison.")
+                print("WARNING: No sample users found in SQLite database")
                 
-        except Exception as e:
-            print(f"ERROR: Failed to validate sample data: {str(e)}")
+            # Test ORM query
+            print("\nStep 3: Testing ORM queries...")
             
-        # Step 3: Test database functionality
-        print("\nStep 3: Testing database functionality...")
-        
-        try:
-            # Test user query
-            users = User.query.all()
-            print(f"Retrieved {len(users)} users from SQL Server using SQLAlchemy ORM.")
-            
-            # Test trip query if the model exists
-            trips = Trip.query.all()
-            print(f"Retrieved {len(trips)} trips from SQL Server using SQLAlchemy ORM.")
-            
-            # Try a more complex query
-            if len(users) > 0:
-                user_id = users[0].id
-                user_trips = Trip.query.filter_by(user_id=user_id).all()
-                print(f"Retrieved {len(user_trips)} trips for user ID {user_id}.")
-                
-        except Exception as e:
-            print(f"ERROR: Failed to test database functionality: {str(e)}")
-        
-        # Step 4: Performance test (simple)
-        print("\nStep 4: Running simple performance test...")
-        
-        try:
+            # Test User query
             start_time = datetime.now()
-            all_users_with_trips = db.session.query(User).join(Trip).all()
-            duration = (datetime.now() - start_time).total_seconds()
-            print(f"Retrieved {len(all_users_with_trips)} users with trips in {duration:.4f} seconds.")
+            users = User.query.all()
+            query_time = (datetime.now() - start_time).total_seconds()
+            
+            print(f"User query returned {len(users)} records in {query_time:.3f} seconds")
+            
+            if users:
+                print(f"Sample user: {users[0].email}")
             
         except Exception as e:
-            print(f"ERROR: Failed to run performance test: {str(e)}")
+            print(f"ERROR during data validation: {str(e)}")
             
-    # Close connections
+    # Step 4: Check database performance
+    print("\nStep 4: Testing database performance...")
+    
+    try:
+        # Basic performance test
+        start_time = datetime.now()
+        mssql_cursor.execute("SELECT TOP 100 * FROM users")
+        rows = mssql_cursor.fetchall()
+        query_time = (datetime.now() - start_time).total_seconds()
+        
+        print(f"Performance test: fetched {len(rows)} users in {query_time:.3f} seconds")
+        
+        # Check indexes
+        mssql_cursor.execute("""
+            SELECT i.name, o.name
+            FROM sys.indexes i
+            JOIN sys.objects o ON i.object_id = o.object_id
+            WHERE o.type = "U"
+            ORDER BY o.name, i.name
+        """)
+        
+        print("\nSQL Server indexes:")
+        indexes = mssql_cursor.fetchall()
+        for idx in indexes:
+            print(f"  - {idx[1]}: {idx[0]}")
+            
+    except Exception as e:
+        print(f"ERROR during performance testing: {str(e)}")
+        
+    # Clean up
     sqlite_conn.close()
     mssql_conn.close()
     
-    print("\nMigration validation completed.")
+    print("\nMigration validation completed!")
     return True
-
-if __name__ == '__main__':
-    validate_migration()
+    
+if __name__ == "__main__":
+    success = validate_migration()
+    sys.exit(0 if success else 1)

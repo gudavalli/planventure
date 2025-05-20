@@ -99,8 +99,7 @@ mssql+pyodbc://<username>:<password>@<server>:<port>/<database>?driver=ODBC+Driv
 When migrating from SQLite to SQL Server, some schema adjustments have been made:
 
 1. Changed `String` types to `Unicode` (mapped to `NVARCHAR` in SQL Server) for proper UTF-8 support
-2. Used SQL Server's native JSON support for the Trip's itinerary
-3. Modified index and constraints to be compatible with SQL Server
+2. Modified index and constraints to be compatible with SQL Server
 
 ## Migrations
 

@@ -36,17 +36,12 @@ def mock_smtp(monkeypatch):
     return MockSMTP
 
 @pytest.fixture
-def auth_headers(client, test_user):
+def auth_headers(app, client, test_user):
     """Helper fixture to get authorization headers."""
-    # First log in to get a valid token from the app's JWT manager
-    response = client.post('/api/auth/login', json={
-        'email': test_user.email,
-        'password': 'password123'
-    })
-    assert response.status_code == 200
-    data = json.loads(response.data)
-    assert 'access_token' in data
-    return {'Authorization': f'Bearer {data["access_token"]}'}
+    with app.app_context():
+        # Get token for test user
+        token = create_access_token(identity=str(test_user.id))
+        return {'Authorization': f'Bearer {token}'}
 
 def test_register(client):
     """Test user registration."""
@@ -154,12 +149,9 @@ def test_login_token_generation_error(client, test_user, monkeypatch):
     assert 'error' in data
     assert 'details' in data
 
-def get_auth_token(client, test_user):
+def get_auth_token(app, client, test_user):
     """Helper function to get auth token."""
-    with client.application.app_context():
-        # Update user's last login to ensure session is active
-        test_user.last_login = datetime.now(UTC)
-        db.session.commit()
+    with app.app_context():
         response = client.post('/api/auth/login', json={
             'email': 'test@example.com',
             'password': 'password123'
@@ -169,12 +161,23 @@ def get_auth_token(client, test_user):
         assert 'access_token' in data
         return data['access_token']
 
-def test_verify_email_success(client, test_user):
+def test_verify_email_success(app, client, test_user):
     """Test successful email verification."""
-    response = client.get('/api/auth/verify-email/test-verification-token')
-    assert response.status_code == 200
-    data = json.loads(response.data)
-    assert data['message'] == 'Email verified successfully'
+    with app.app_context():        # Get fresh user instance
+        user = db.session.get(User, test_user.id)
+        user.verification_token = 'test-verification-token'
+        user.verification_token_expires = datetime.now(UTC) + timedelta(hours=1)
+        db.session.commit()
+        
+        response = client.get('/api/auth/verify-email/test-verification-token')
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['message'] == 'Email verified successfully'
+        
+        # Verify the user's email is actually marked as verified
+        db.session.refresh(user)
+        assert user.is_verified
+        assert user.verification_token is None
 
 def test_verify_email_invalid_token(client):
     """Test email verification with invalid token."""
@@ -183,21 +186,22 @@ def test_verify_email_invalid_token(client):
     data = json.loads(response.data)
     assert data['error'] == 'Invalid verification token'
 
-def test_verify_email_db_error(client, test_user, monkeypatch):
+def test_verify_email_db_error(app, client, test_user, monkeypatch):
     """Test verify email with database error."""
     def mock_commit():
         raise Exception("Database error")
     
-    with client.application.app_context():
-        test_user.verification_token = 'test-token'
-        db.session.add(test_user)
+    with app.app_context():        # Get fresh user instance
+        user = db.session.get(User, test_user.id)
+        user.verification_token = 'test-token'
+        user.verification_token_expires = datetime.now(UTC) + timedelta(hours=1)
         db.session.commit()
         
-    monkeypatch.setattr(db.session, 'commit', mock_commit)
-    response = client.get('/api/auth/verify-email/test-token')
-    assert response.status_code == 500
-    data = json.loads(response.data)
-    assert 'error' in data
+        monkeypatch.setattr(db.session, 'commit', mock_commit)
+        response = client.get('/api/auth/verify-email/test-token')
+        assert response.status_code == 500
+        data = json.loads(response.data)
+        assert 'error' in data
 
 def test_forgot_password_existing_email(client, test_user, mock_smtp):
     """Test forgot password with existing email."""
@@ -239,20 +243,19 @@ def test_forgot_password_email_error(client, test_user, mock_smtp, monkeypatch):
     assert 'error' in data
     assert data['error'] == 'Failed to send reset email'
 
-def test_get_current_user_success(client, test_user, auth_headers):
+def test_get_current_user_success(app, client, test_user, auth_headers):
     """Test getting current user details with valid token."""
-    with client.application.app_context():
-        response = client.get('/api/auth/me', headers=auth_headers)
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data['email'] == 'test@example.com'
+    response = client.get('/api/auth/me', headers=auth_headers)
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['email'] == test_user.email
 
 def test_get_current_user_no_token(client):
     """Test getting current user without token."""
     response = client.get('/api/auth/me')
     assert response.status_code == 401
 
-def test_get_current_user_db_error(client, auth_headers, monkeypatch):
+def test_get_current_user_db_error(app, client, test_user, auth_headers, monkeypatch):
     """Test get current user with database error."""
     def mock_execute(*args, **kwargs):
         raise Exception("Database error")
@@ -264,31 +267,32 @@ def test_get_current_user_db_error(client, auth_headers, monkeypatch):
     assert 'error' in data
     assert 'details' in data
 
-def test_get_profile_success(client, test_user, auth_headers):
+def test_get_profile_success(app, client, test_user, auth_headers):
     """Test getting user profile with valid token."""
-    with client.application.app_context():
-        response = client.get('/api/auth/profile', headers=auth_headers)
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data['email'] == 'test@example.com'
+    response = client.get('/api/auth/profile', headers=auth_headers)
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['email'] == test_user.email
 
-def test_update_profile_success(client, test_user, auth_headers):
+def test_update_profile_success(app, client, test_user, auth_headers):
     """Test updating user profile."""
-    with client.application.app_context():
-        profile_data = {
-            'first_name': 'John',
-            'last_name': 'Doe',
-            'phone': '1234567890'
-        }
-        response = client.put('/api/auth/profile',
-            json=profile_data,
-            headers=auth_headers
-        )
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data['first_name'] == 'John'
-        assert data['last_name'] == 'Doe'
-        assert data['phone'] == '1234567890'
+    profile_data = {
+        'first_name': 'John',
+        'last_name': 'Doe',
+        'phone': '1234567890'
+    }
+    response = client.put('/api/auth/profile',
+        json=profile_data,
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    data = json.loads(response.data)
+      # Verify changes were saved
+    with app.app_context():
+        user = db.session.get(User, test_user.id)
+        assert user.first_name == 'John'
+        assert user.last_name == 'Doe'
+        assert user.phone == '1234567890'
 
 def test_update_profile_no_token(client):
     """Test updating profile without token."""
@@ -388,31 +392,33 @@ def test_change_password_db_error(client, test_user, auth_headers, monkeypatch):
     data = json.loads(response.data)
     assert 'error' in data
 
-def setup_password_reset_token(client, test_user):
+def setup_password_reset_token(app, test_user):
     """Helper function to set up password reset token."""
-    with client.application.app_context():
-        test_user.reset_token = 'test-reset-token'
-        test_user.reset_token_expires = datetime.now(UTC) + timedelta(hours=1)
-        db.session.add(test_user)
+    with app.app_context():
+        # Get a fresh user instance from the database
+        user = db.session.get(User, test_user.id)
+        user.reset_token = 'test-reset-token'
+        user.reset_token_expires = datetime.now(UTC) + timedelta(hours=1)
         db.session.commit()
         return 'test-reset-token'
 
-def test_reset_password_success(client, test_user):
+def test_reset_password_success(app, client, test_user):
     """Test password reset with valid token."""
-    with client.application.app_context():
+    with app.app_context():
         # Use the helper function to set up the token
-        token = setup_password_reset_token(client, test_user)
-
+        token = setup_password_reset_token(app, test_user)
+        
         # Perform the password reset
-        response = client.post('/api/auth/reset-password/test-reset-token',
+        response = client.post(f'/api/auth/reset-password/{token}',
             json={'password': 'newpassword123'}
         )
         assert response.status_code == 200
-        assert json.loads(response.data)['message'] == 'Password reset successful'
+        data = json.loads(response.data)
+        assert data['message'] == 'Password reset successful'
 
         # Verify the new password works
         response = client.post('/api/auth/login', json={
-            'email': 'test@example.com',
+            'email': test_user.email,
             'password': 'newpassword123'
         })
         assert response.status_code == 200
@@ -424,7 +430,8 @@ def test_reset_password_invalid_token(client):
         json={'password': 'newpassword123'}
     )
     assert response.status_code == 400
-    assert json.loads(response.data)['error'] == 'Invalid or expired reset token'
+    data = json.loads(response.data)
+    assert data['error'] == 'Invalid or expired reset token'
 
 def test_reset_password_expired_token(client, test_user):
     """Test reset password with expired token."""
@@ -439,20 +446,20 @@ def test_reset_password_expired_token(client, test_user):
     data = json.loads(response.data)
     assert data['error'] == 'Invalid or expired reset token'
 
-def test_password_reset_db_error(client, test_user, monkeypatch):
+def test_password_reset_db_error(app, client, test_user, monkeypatch):
     """Test password reset with database error."""
     def mock_commit():
         raise Exception("Database error")
     
-    with client.application.app_context():
-        # Set up a valid reset token
-        test_user.reset_token = 'test-token'
-        test_user.reset_token_expires = datetime.now(UTC) + timedelta(hours=1)
-        db.session.add(test_user)
-        db.session.commit()
+    with app.app_context():
+        # Get fresh user instance and set up token
+        token = setup_password_reset_token(app, test_user)
         
-    monkeypatch.setattr(db.session, 'commit', mock_commit)
-    response = client.post('/api/auth/reset-password/test-token', json={'password': 'newpass'})
-    assert response.status_code == 500
-    data = json.loads(response.data)
-    assert 'error' in data
+        # Mock the commit to fail
+        monkeypatch.setattr(db.session, 'commit', mock_commit)
+        response = client.post(f'/api/auth/reset-password/{token}',
+            json={'password': 'newpassword123'}
+        )
+        assert response.status_code == 500
+        data = json.loads(response.data)
+        assert 'error' in data

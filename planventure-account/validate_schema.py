@@ -1,38 +1,36 @@
 #!/usr/bin/env python
-"""Script to validate the database schema after migration to SQL Server."""
+"""Script to validate the database schema after migration."""
 import os
 import sys
 import pyodbc
 from dotenv import load_dotenv
 from app import create_app, db
-from sqlalchemy import inspect, text
 from models.user import User
-from models.trip import Trip
+from models.database import get_connection_string
 
 # Load environment variables
 load_dotenv()
 
 def get_table_schema(cursor, table_name):
-    """Get the schema of a table."""
-    cursor.execute(f"SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table_name}' ORDER BY ORDINAL_POSITION")
-    return cursor.fetchall()
+    """Get column information for a table."""
+    try:
+        cursor.execute(f"SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE " +
+                       f"FROM INFORMATION_SCHEMA.COLUMNS " +
+                       f"WHERE TABLE_NAME = '{table_name}' " +
+                       f"ORDER BY ORDINAL_POSITION")
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"ERROR: Could not get schema for {table_name}: {str(e)}")
+        return []
 
 def validate_schema():
     """Validate the database schema after migration."""
     print("PlanVenture Account Service Schema Validation")
-    print("=================================\n")
+    print("===================================\n")
     
-    # Get database config from environment
-    server = os.getenv('DB_SERVER', 'localhost,1433')
-    username = os.getenv('DB_USERNAME', 'sa')
-    password = os.getenv('DB_PASSWORD', 'YourStrong@Passw0rd')
-    database = os.getenv('DB_NAME', 'planventure')
-    driver = os.getenv('DB_DRIVER', 'ODBC Driver 17 for SQL Server')
-    
-    conn_str = f'DRIVER={{{driver}}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
-    
+    # Connect to SQL Server
     try:
-        # Connect directly with pyodbc
+        conn_str = get_connection_string()
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
         print("Connected successfully to SQL Server.")
@@ -40,111 +38,78 @@ def validate_schema():
         print(f"ERROR: Failed to connect to SQL Server: {str(e)}")
         return False
     
-    # Create Flask app context
-    app = create_app()
-    
-    with app.app_context():
-        # Get SQLAlchemy inspector
-        inspector = inspect(db.engine)
+    try:
+        # Step 1: Verify database exists
+        print("\nStep 1: Verifying database exists...")
+        cursor.execute("SELECT DB_NAME()")
+        db_name = cursor.fetchone()[0]
+        print(f"Connected to database: {db_name}")
         
-        # Check all tables
-        print("\nChecking database tables...")
-        tables = inspector.get_table_names()
-        print(f"Found {len(tables)} tables: {', '.join(tables)}")
+        # Step 2: Check if expected tables exist
+        print("\nStep 2: Checking expected tables...")
+        cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'")
+        tables = [row[0] for row in cursor.fetchall()]
         
-        expected_tables = ['users', 'trips']
-        for table in expected_tables:
-            if table in tables:
-                print(f"✓ Table '{table}' exists")
-            else:
-                print(f"✗ Table '{table}' is missing!")
+        print("Found tables:")
+        for table in tables:
+            print(f"  - {table}")
+            
+        expected_tables = ['users']
+        missing_tables = [table for table in expected_tables if table not in tables]
         
-        # Check columns for each model
-        print("\nValidating User model schema...")
+        if missing_tables:
+            print("\nWARNING: The following expected tables are missing:")
+            for table in missing_tables:
+                print(f"  - {table}")
+        else:
+            print("\nAll expected tables are present.")
+        
+        # Step 3: Validate User table schema
+        print("\nStep 3: Validating User model schema...")
         user_schema = get_table_schema(cursor, 'users')
         print("User table columns:")
         for column in user_schema:
-            print(f"  - {column.COLUMN_NAME}: {column.DATA_TYPE}", end="")
-            if column.CHARACTER_MAXIMUM_LENGTH:
-                if column.CHARACTER_MAXIMUM_LENGTH == -1:
-                    print(f"(MAX)", end="")
-                else:
-                    print(f"({column.CHARACTER_MAXIMUM_LENGTH})", end="")
-            print(f" {'NULL' if column.IS_NULLABLE == 'YES' else 'NOT NULL'}")
-        
-        print("\nValidating Trip model schema...")
-        trip_schema = get_table_schema(cursor, 'trips')
-        print("Trip table columns:")
-        for column in trip_schema:
-            print(f"  - {column.COLUMN_NAME}: {column.DATA_TYPE}", end="")
-            if column.CHARACTER_MAXIMUM_LENGTH:
-                if column.CHARACTER_MAXIMUM_LENGTH == -1:
-                    print(f"(MAX)", end="")
-                else:
-                    print(f"({column.CHARACTER_MAXIMUM_LENGTH})", end="")
-            print(f" {'NULL' if column.IS_NULLABLE == 'YES' else 'NOT NULL'}")
-        
-        # Check indexes
-        print("\nValidating indexes...")
-        for table in expected_tables:
-            indexes = inspector.get_indexes(table)
-            foreign_keys = inspector.get_foreign_keys(table)
+            col_name, data_type, max_length, nullable = column
+            max_length_str = f"({max_length})" if max_length else ""
+            nullable_str = "NULL" if nullable == "YES" else "NOT NULL"
+            print(f"  - {col_name}: {data_type}{max_length_str} {nullable_str}")
             
-            print(f"\nIndexes for '{table}':")
-            for index in indexes:
-                print(f"  - {index['name']}: columns={', '.join(index['column_names'])} (unique={index['unique']})")
-            
-            print(f"Foreign keys for '{table}':")
-            for fk in foreign_keys:
-                print(f"  - {fk['name']}: {', '.join(fk['constrained_columns'])} -> {fk['referred_table']}.{', '.join(fk['referred_columns'])}")
+        # Check if important columns exist
+        user_columns = [col[0].lower() for col in user_schema]
+        required_user_columns = ['id', 'email', 'password_hash', 'is_active', 'is_verified']
+        missing_columns = [col for col in required_user_columns if col.lower() not in user_columns]
         
-        # Run test queries
-        print("\nRunning test queries...")
+        if missing_columns:
+            print("\nWARNING: Missing required columns in users table:")
+            for col in missing_columns:
+                print(f"  - {col}")
+        else:
+            print("\nAll required user columns are present.")
         
-        # Test User model
-        try:
-            user_count = User.query.count()
-            print(f"User model query successful. Found {user_count} users.")
-        except Exception as e:
-            print(f"ERROR: User model query failed: {str(e)}")
+        # Step 4: Test database queries
+        print("\nStep 4: Testing database queries...")
         
-        # Test Trip model
-        try:
-            trip_count = Trip.query.count()
-            print(f"Trip model query successful. Found {trip_count} trips.")
-        except Exception as e:
-            print(f"ERROR: Trip model query failed: {str(e)}")
+        # Create Flask app context to use models
+        app = create_app()
         
-        # Test a join query
-        try:
-            result = db.session.query(User, Trip).join(Trip, Trip.user_id == User.id).count()
-            print(f"Join query successful. Found {result} user-trip associations.")
-        except Exception as e:
-            print(f"ERROR: Join query failed: {str(e)}")
+        with app.app_context():
+            # Test User model
+            try:
+                user_count = User.query.count()
+                print(f"User model query successful. Found {user_count} users.")
+            except Exception as e:
+                print(f"ERROR: User model query failed: {str(e)}")
+                
+        print("\nSchema validation completed.")
+        return len(missing_tables) == 0 and len(missing_columns) == 0
         
-        # Execute a query to test collation
-        print("\nTesting string collation (case sensitivity)...")
-        try:
-            # Create a test user with mixed case if none exist
-            if User.query.count() == 0:
-                test_user = User(email="Test@Example.com", password="password123")
-                db.session.add(test_user)
-                db.session.commit()
-                print("Created test user for collation test")
-            
-            # Test case insensitive search
-            result1 = User.query.filter(User.email.ilike("test@example.com")).count()
-            result2 = User.query.filter(User.email == "test@example.com").count()
-            print(f"Case insensitive search (ILIKE): found {result1} results")
-            print(f"Case sensitive search (=): found {result2} results")
-        except Exception as e:
-            print(f"ERROR: Collation test failed: {str(e)}")
-    
-    # Close connection
-    conn.close()
-    
-    print("\nSchema validation completed.")
-    return True
+    except Exception as e:
+        print(f"ERROR during schema validation: {str(e)}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
 
-if __name__ == '__main__':
-    validate_schema()
+if __name__ == "__main__":
+    success = validate_schema()
+    sys.exit(0 if success else 1)

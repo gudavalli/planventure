@@ -7,12 +7,8 @@ class User(db.Model):
     """User model for authentication and user management."""
     __tablename__ = 'users'    # Primary Key
     id = db.Column(db.Integer, primary_key=True)
-    
-    # SQL Server recommendation: Use nvarchar for Unicode strings
+      # SQL Server recommendation: Use nvarchar for Unicode strings
     email = db.Column(db.Unicode(120), unique=True, nullable=False, index=True)
-    
-    # We don't need to define the relationship here as it's defined in the Trip model
-    # with a backref, but we could add specific configurations if needed
     password_hash = db.Column(db.Unicode(256), nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     is_verified = db.Column(db.Boolean, default=False, nullable=False)

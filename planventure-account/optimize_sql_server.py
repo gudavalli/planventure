@@ -27,14 +27,10 @@ def analyze_and_optimize():
     
     # Step 1: Check and create missing indexes
     print("\nStep 1: Analyzing and creating indexes...")
-    
-    # Common index patterns for API applications
+      # Common index patterns for API applications
     indexes_to_check = [
         # Format: (table_name, column_name, index_name)
-        ("users", "email", "IX_users_email"),
-        ("trips", "user_id", "IX_trips_user_id"),
-        ("trips", "start_date", "IX_trips_start_date"),
-        ("trips", "destination", "IX_trips_destination")
+        ("users", "email", "IX_users_email")
     ]
     
     for table, column, index_name in indexes_to_check:

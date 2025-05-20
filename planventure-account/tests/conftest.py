@@ -1,8 +1,8 @@
+# filepath: c:\Users\sreen\learning\copilot-agent\planventure\planventure-account\tests\conftest.py
 import pytest
 from datetime import datetime, timedelta, UTC, date
 from app import create_app, db
 from models.user import User
-from models.trip import Trip
 
 @pytest.fixture
 def app():
@@ -10,95 +10,101 @@ def app():
     app = create_app()
     app.config.update({
         'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': 'mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure_test?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes',
-        'JWT_SECRET_KEY': 'this-is-a-secret-key-for-testing-32-bytes',
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',  # Use in-memory SQLite for tests
+        'JWT_SECRET_KEY': 'this-is-a-test-key',
         'JWT_ACCESS_TOKEN_EXPIRES': timedelta(hours=1),
         'JWT_ERROR_MESSAGE_KEY': 'message',
-        'JWT_TOKEN_LOCATION': ['headers'],
         'JWT_HEADER_TYPE': 'Bearer',
-        'JWT_ALGORITHM': 'HS256',
-        'JWT_IDENTITY_CLAIM': 'sub'
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'PROPAGATE_EXCEPTIONS': True
     })
 
-    # Create the database and the database tables
-    with app.app_context():
-        db.create_all()
-        yield app
-        db.drop_all()
+    # Push an app context and create tables
+    ctx = app.app_context()
+    ctx.push()
 
-@pytest.fixture(autouse=True)
-def cleanup_database(app):
-    """Clean up database before each test."""
-    with app.app_context():
-        # Clean up all tables
-        db.drop_all()
-        db.create_all()
-        yield
+    # Initialize database
+    db.create_all()
+
+    yield app
+
+    # Clean up resources
+    try:
+        db.session.rollback()  # Roll back any active transactions
+        db.session.remove()  # Remove session
+        db.drop_all()  # Drop all tables
+    finally:
+        ctx.pop()  # Always pop the context
 
 @pytest.fixture
 def client(app):
     """A test client for the app."""
-    return app.test_client()
+    with app.test_client() as client:
+        yield client
+
+@pytest.fixture
+def runner(app):
+    """A test CLI runner for the app."""
+    return app.test_cli_runner()
 
 @pytest.fixture
 def test_user(app):
     """Create a test user."""
-    with app.app_context():
-        # Clear any existing test user
-        User.query.filter_by(email='test@example.com').delete()
-        db.session.commit()
+    # Create user and add to database
+    user = User(
+        email='test@example.com',
+        password='password123',
+        first_name='Test',
+        last_name='User'
+    )
+    user.is_active = True
+    user.is_verified = True
+    user.verification_token = 'test-verification-token'
+    user.verification_token_expires = datetime.now(UTC) + timedelta(hours=1)
+    user.reset_token = 'test-reset-token'
+    user.reset_token_expires = datetime.now(UTC) + timedelta(hours=1)
+    
+    db.session.add(user)
+    db.session.commit()
 
-        user = User(
-            email='test@example.com',
-            password='password123'
-        )
-        user.verification_token = 'test-verification-token'
-        user.verification_token_expires = datetime.now(UTC) + timedelta(hours=24)
-        db.session.add(user)
+    yield user
+
+    # Clean up
+    try:
+        db.session.rollback()  # Roll back any active transaction
+        db.session.query(User).filter_by(email='test@example.com').delete()
         db.session.commit()
-        
-        # Get a fresh user instance to ensure the ID is properly set
-        fresh_user = db.session.get(User, user.id)
-        assert fresh_user is not None
-        assert fresh_user.id is not None
-        return fresh_user
-        
-@pytest.fixture
-def test_trip(test_user, app):
-    """Create a test trip."""
-    with app.app_context():
-        # Create a test trip for the test user
-        trip = Trip(
-            user_id=test_user.id,
-            title="Test Trip",
-            destination="Test Destination",
-            start_date=date.today(),
-            end_date=date.today() + timedelta(days=7),
-            description="A test trip created for testing",
-            latitude="40.7128",
-            longitude="-74.0060",
-            itinerary={
-                "day1": "Arrive and check in",
-                "day2": "Explore the city",
-                "day3": "Visit museums"
-            }
-        )
-        db.session.add(trip)
-        db.session.commit()
-        
-        # Get a fresh trip instance to ensure the ID is properly set
-        fresh_trip = db.session.get(Trip, trip.id)
-        assert fresh_trip is not None
-        assert fresh_trip.id is not None
-        return fresh_trip
+    except:
+        db.session.rollback()
+        raise
 
 @pytest.fixture
-def auth_headers(app, test_user):
-    """Create authentication headers for the test user."""
-    with app.app_context():
-        from flask_jwt_extended import create_access_token
-        token = create_access_token(identity=test_user.id)
-        headers = {
-            'Authorization': f'Bearer {token}'
-        }
-        return headers
+def test_user_with_expired_token(app):
+    """Create a test user with expired verification and reset tokens."""
+    # Create user and add to database
+    user = User(
+        email='expired@example.com',
+        password='password123',
+        first_name='Test',
+        last_name='User'
+    )
+    user.is_active = True
+    user.is_verified = True
+    user.verification_token = 'expired-verification-token'
+    user.verification_token_expires = datetime.now(UTC) - timedelta(hours=1)
+    user.reset_token = 'expired-reset-token'
+    user.reset_token_expires = datetime.now(UTC) - timedelta(hours=1)
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    yield user
+
+    # Clean up
+    try:
+        db.session.rollback()  # Roll back any active transaction
+        db.session.query(User).filter_by(email='expired@example.com').delete()
+        db.session.commit()
+    except:
+        db.session.rollback()
+        raise

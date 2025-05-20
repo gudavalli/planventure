@@ -34,7 +34,7 @@ The migration enhances the service's scalability, reliability, and provides bett
 3. **Model Changes**
    - Updated data types for better SQL Server compatibility
    - Changed `String` to `Unicode` / `NVARCHAR` for text fields
-   - Used SQL Server's JSON type for Trip.itinerary
+
 
 4. **Database Initialization**
    - Created new init_db.py script to handle:
@@ -134,9 +134,7 @@ If you have existing data in SQLite that you want to migrate:
    ```
 
 3. The script will:
-   - Connect to both SQLite and SQL Server
-   - Transfer users and their associated data
-   - Transfer trips and maintain relationships
+   - Connect to both SQLite and SQL Server   - Transfer users and their associated data
    - Preserve IDs and timestamps
 
 ### Verify the Migration

@@ -14,7 +14,6 @@ This guide will walk you through creating a Flask-based authentication service w
 We'll be working in the `api-start` branch and creating a structured API with:
 - Authentication system
 - Database models
-- CRUD operations for trips
 - JWT token protection
 
 ## Step 1: Project Setup
@@ -73,17 +72,7 @@ python init_db.py
 3. Install the extension
 4. Click on `init_db.py` to view the created tables
 
-### Trip Model
 
-In Copilot Edits, type:
-```
-Create SQLAlchemy Trip model with user relationship, destination, start date, end date, coordinates and itinerary
-```
-
-Accept changes and run the initialization script again:
-```bash
-python3 init_db.py
-```
 
 ### Commit Your Changes
 
@@ -173,31 +162,7 @@ Review and accept the changes.
 
 Use Source Control and Copilot to create a commit message.
 
-## Step 4: Trip Routes
 
-### Create Trip Routes Blueprint
-
-In Copilot Edits, type:
-```
-Create Trip routes blueprint with CRUD operations
-```
-
-Review and accept the changes.
-
-> **Note**: Ensure that `verify_jwt_in_request` is set to `verify_jwt_in_request(optional=True)` if needed
-
-### Test Trip Routes
-
-Use Bruno API Client to test:
-1. CREATE a new trip
-2. GET a trip by ID
-
-### Add Itinerary Template Generator
-
-In Copilot Edits, type:
-```
-Create function to generate default itinerary template
-```
 
 Review, accept changes, and test the updated route.
 
@@ -233,7 +198,6 @@ Ask Copilot to write a comprehensive README for your API project.
 
 ### GOTCHAS:
 
-- Ensure there are no trailing slashes in any of the routes - especially the base `/trip` route
 - Make sure all required packages are installed
 - Check that JWT token validation is configured correctly
 - Verify database tables are created properly using the SQLite viewer
