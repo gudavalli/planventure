@@ -1,6 +1,6 @@
 # SQL Server Authentication Setup for Production
 
-This document outlines the secure authentication setup for using SQL Server with PlanVenture API in a production environment.
+This document outlines the secure authentication setup for using SQL Server with PlanVenture Account Service in a production environment.
 
 ## Overview
 

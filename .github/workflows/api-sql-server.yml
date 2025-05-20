@@ -1,14 +1,14 @@
-name: PlanVenture API CI/CD
+name: PlanVenture Account Service CI/CD
 
 on:
   push:
     branches: [ main ]
     paths:
-    - 'planventure-api/**'
+    - 'planventure-account/**'
   pull_request:
     branches: [ main ]
     paths:
-    - 'planventure-api/**'
+    - 'planventure-account/**'
   workflow_dispatch:
 
 jobs:
@@ -48,14 +48,14 @@ jobs:
       shell: sudo bash {0}
     
     - name: Install dependencies
-      working-directory: ./planventure-api
+      working-directory: ./planventure-account
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     
     - name: Initialize test database
-      working-directory: ./planventure-api
+      working-directory: ./planventure-account
       run: |
         python -c "from init_db import init_database; init_database('planventure_test', False)"
       env:
@@ -67,7 +67,7 @@ jobs:
         SQLALCHEMY_DATABASE_URI: mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure_test?driver=ODBC+Driver+17+for+SQL+Server
     
     - name: Run tests
-      working-directory: ./planventure-api
+      working-directory: ./planventure-account
       run: |
         pytest -v --cov=. --cov-report=xml
       env:
@@ -84,7 +84,7 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./planventure-api/coverage.xml
+        file: ./planventure-account/coverage.xml
         flags: unittests
         name: codecov-planventure
         fail_ci_if_error: false
@@ -99,3 +99,4 @@ jobs:
     steps:
     - name: Placeholder for deployment
       run: echo "Deployment would happen here if enabled"
+

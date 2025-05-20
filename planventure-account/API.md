@@ -1,4 +1,4 @@
-# PlanVenture API Documentation
+# PlanVenture Account Service API Documentation
 
 ## Authentication Endpoints
 

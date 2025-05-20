@@ -67,7 +67,7 @@ def create_app(config_class=DevConfig):
     
     @app.route('/')
     def home():
-        return jsonify({"message": "Welcome to PlanVenture API"})    @app.route('/health')
+        return jsonify({"message": "Welcome to PlanVenture Account Service"})    @app.route('/health')
     def health_check():
         """Health check endpoint with database connectivity verification."""
         db_status = {

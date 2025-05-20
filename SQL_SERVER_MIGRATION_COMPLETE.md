@@ -1,7 +1,7 @@
 # SQL Server Migration - Completion Report
 
 ## Overview
-This document confirms the successful completion of the database migration from SQLite to Microsoft SQL Server in the PlanVenture API backend application.
+This document confirms the successful completion of the database migration from SQLite to Microsoft SQL Server in the PlanVenture Account Service backend.
 
 ## Migration Summary
 

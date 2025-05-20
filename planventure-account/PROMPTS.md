@@ -1,6 +1,6 @@
-# Building the Planventure API with GitHub Copilot
+# Building the Planventure Account Service with GitHub Copilot
 
-This guide will walk you through creating a Flask-based REST API with SQLAlchemy and JWT authentication using GitHub Copilot to accelerate development.
+This guide will walk you through creating a Flask-based authentication service with SQLAlchemy and JWT authentication using GitHub Copilot to accelerate development.
 
 ## Prerequisites
 

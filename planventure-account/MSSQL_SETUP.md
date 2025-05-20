@@ -1,6 +1,6 @@
-# SQL Server Configuration for PlanVenture API
+# SQL Server Configuration for PlanVenture Account Service
 
-This guide will help you set up Microsoft SQL Server for the PlanVenture API.
+This guide will help you set up Microsoft SQL Server for the PlanVenture Account Service.
 
 ## Prerequisites
 

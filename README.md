@@ -4,7 +4,7 @@ PlanVenture is a modern travel planning and adventure management application con
 
 ## Project Structure
 
-- **planventure-api**: Flask-based REST API providing authentication and data services
+- **planventure-account**: Flask-based authentication provider for user management and authentication services
 - **planventure-web**: React frontend application built with Bootstrap
 
 ## Web Application
@@ -28,7 +28,7 @@ The web application was recently migrated from Tailwind CSS to Bootstrap 5 to pr
 ### Backend Setup
 
 ```bash
-cd planventure-api
+cd planventure-account
 pip install -r requirements.txt
 flask run
 ```
@@ -45,7 +45,7 @@ npm run dev
 
 ### Backend
 - Python Flask
-- SQLite database
+- Microsoft SQL Server database
 - JWT authentication
 
 ### Frontend

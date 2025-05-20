@@ -19,7 +19,7 @@ def get_table_schema(cursor, table_name):
 
 def validate_schema():
     """Validate the database schema after migration."""
-    print("PlanVenture API Schema Validation")
+    print("PlanVenture Account Service Schema Validation")
     print("=================================\n")
     
     # Get database config from environment

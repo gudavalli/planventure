@@ -2,8 +2,8 @@
 
 ## Overview
 
-This document outlines the process of migrating the PlanVenture API from SQLite to Microsoft SQL Server. 
-The migration enhances the application's scalability, reliability, and provides better enterprise-level features.
+This document outlines the process of migrating the PlanVenture Account Service from SQLite to Microsoft SQL Server. 
+The migration enhances the service's scalability, reliability, and provides better enterprise-level features.
 
 ## Why Migrate from SQLite to SQL Server?
 

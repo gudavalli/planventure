@@ -1,4 +1,4 @@
--- SQL Server Setup Script for PlanVenture API
+-- SQL Server Setup Script for PlanVenture Account Service
 -- This script performs initial setup for SQL Server
 
 -- Enable advanced options

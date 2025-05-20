@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Script to optimize SQL Server database for PlanVenture API."""
+"""Script to optimize SQL Server database for PlanVenture Account Service."""
 import os
 import sys
 import pyodbc

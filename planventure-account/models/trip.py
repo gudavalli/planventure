@@ -1,4 +1,4 @@
-"""Trip model for the PlanVenture API."""
+"""Trip model for the PlanVenture Account Service."""
 from datetime import datetime, UTC
 from sqlalchemy.dialects.mssql import JSON
 from extensions import db

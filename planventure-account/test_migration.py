@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Script to validate the PlanVenture API migration from SQLite to SQL Server."""
+"""Script to validate the PlanVenture Account Service migration from SQLite to SQL Server."""
 import os
 import sys
 import json
@@ -16,7 +16,7 @@ load_dotenv()
 
 def validate_migration():
     """Validate the migration from SQLite to SQL Server."""
-    print("PlanVenture API Migration Validation")
+    print("PlanVenture Account Service Migration Validation")
     print("====================================\n")
     
     # Check if SQLite database exists

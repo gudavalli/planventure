@@ -1,4 +1,4 @@
-"""Database initialization script for PlanVenture API."""
+"""Database initialization script for PlanVenture Account Service."""
 import os
 import pyodbc
 import argparse
