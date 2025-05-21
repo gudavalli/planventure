@@ -31,10 +31,15 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const responseData = await authService.login(credentials);
-      setUser(responseData.user);
-      toast.success('Login successful!');
-      navigate('/dashboard');
-      return true;
+      if (responseData.access_token) {
+        // Fetch user data after successful login
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+        toast.success('Login successful!');
+        navigate('/dashboard');
+        return true;
+      }
+      return false;
     } catch (error) {
       const errorMessage = error.response?.status === 401 
         ? 'Invalid email or password'

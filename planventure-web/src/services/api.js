@@ -50,19 +50,30 @@ export const authService = {
     const response = await api.get(`/auth/verify-email/${token}`);
     return response.data;
   },
-
   getCurrentUser: async () => {
-    const response = await api.get('/auth/profile');
+    const response = await api.get('/auth/me');
     return response.data;
   },
 
   updateProfile: async (userData) => {
     const response = await api.put('/auth/profile', userData);
-    return response.data;
+    return {
+      user: response.data
+    };
   },
 
   changePassword: async (passwords) => {
     const response = await api.post('/auth/change-password', passwords);
+    return response.data;
+  },
+
+  getAllUsers: async () => {
+    const response = await api.get('/auth/users');
+    return response.data;
+  },
+
+  updateUserRole: async (userId, role) => {
+    const response = await api.put(`/auth/users/${userId}/role`, { role });
     return response.data;
   },
 };

@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta, UTC
 from app import db
+from models.user import User
 
 def test_forgot_password_existing_email(client, test_user, mock_smtp):
     """Test forgot password with existing email."""

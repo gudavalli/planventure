@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
+  { name: 'Users', href: '/users', adminOnly: true },
 ];
 
 const Navigation = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const dropdownRef = useRef(null);
 
   const handleLogout = (e) => {
@@ -33,14 +34,16 @@ const Navigation = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             {navigation.map((item) => (
-              <li className="nav-item" key={item.name}>
-                <Link 
-                  className="nav-link" 
-                  to={item.href}
-                >
-                  {item.name}
-                </Link>
-              </li>
+              (!item.adminOnly || (user && user.role === 'ADMIN')) && (
+                <li className="nav-item" key={item.name}>
+                  <Link 
+                    className="nav-link" 
+                    to={item.href}
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              )
             ))}
           </ul>
           <div className="dropdown">

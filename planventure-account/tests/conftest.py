@@ -184,3 +184,60 @@ def test_user_with_expired_token(app):
     except:
         db.session.rollback()
         raise
+
+@pytest.fixture
+def mock_smtp(monkeypatch):
+    """Mock SMTP for email testing."""
+    class MockSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def starttls(self):
+            return True
+
+        def login(self, username, password):
+            return True
+
+        def send_message(self, msg):
+            return True
+
+        def quit(self):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.quit()
+            return False  # Don't suppress any exceptions
+
+    monkeypatch.setattr('smtplib.SMTP', MockSMTP)
+    yield MockSMTP
+
+@pytest.fixture
+def auth_headers(app, test_user):
+    """Generate authentication headers for test user."""
+    with app.app_context():
+        access_token = test_user.get_access_token()
+        return {'Authorization': f'Bearer {access_token}'}
+
+@pytest.fixture
+def admin_headers(app, admin_user):
+    """Generate authentication headers for admin user."""
+    with app.app_context():
+        access_token = admin_user.get_access_token()
+        return {'Authorization': f'Bearer {access_token}'}
+
+@pytest.fixture
+def talent_lead_headers(app, talent_lead_user):
+    """Generate authentication headers for talent lead user."""
+    with app.app_context():
+        access_token = talent_lead_user.get_access_token()
+        return {'Authorization': f'Bearer {access_token}'}
+
+@pytest.fixture
+def candidate_headers(app, candidate_user):
+    """Generate authentication headers for candidate user."""
+    with app.app_context():
+        access_token = candidate_user.get_access_token()
+        return {'Authorization': f'Bearer {access_token}'}

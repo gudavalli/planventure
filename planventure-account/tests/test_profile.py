@@ -1,5 +1,6 @@
 import json
 from app import db
+from models.user import User
 
 def test_get_current_user_success(app, client, test_user, auth_headers):
     """Test getting current user details with valid token."""

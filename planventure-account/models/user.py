@@ -112,6 +112,11 @@ class User(db.Model):
             raise ValueError(f"Invalid role: {role}")
         self.role = role
 
+    def get_access_token(self):
+        """Generate an access token for this user."""
+        from flask_jwt_extended import create_access_token
+        return create_access_token(identity=str(self.id))
+
     def __repr__(self):
         """String representation of the User object."""
         return f'<User {self.email}>'
