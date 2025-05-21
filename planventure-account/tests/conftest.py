@@ -1,38 +1,36 @@
 # filepath: c:\Users\sreen\learning\copilot-agent\planventure\planventure-account\tests\conftest.py
 import pytest
 from datetime import datetime, timedelta, UTC, date
-from app import create_app, db
+from app import create_app, db, TestConfig
 from models.user import User
 
 @pytest.fixture
 def app():
     """Create and configure a new app instance for each test."""
-    app = create_app()
-    app.config.update({
-        'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',  # Use in-memory SQLite for tests
-        'JWT_SECRET_KEY': 'this-is-a-test-key',
-        'JWT_ACCESS_TOKEN_EXPIRES': timedelta(hours=1),
-        'JWT_ERROR_MESSAGE_KEY': 'message',
-        'JWT_HEADER_TYPE': 'Bearer',
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-        'PROPAGATE_EXCEPTIONS': True
-    })
+    app = create_app(config_class=TestConfig)
 
-    # Push an app context and create tables
+    # Push an app context
     ctx = app.app_context()
     ctx.push()
 
-    # Initialize database
+    # Initialize database and create a session
     db.create_all()
+    
+    # Start a transaction
+    db.session.begin_nested()  # Create a savepoint
 
     yield app
 
     # Clean up resources
     try:
-        db.session.rollback()  # Roll back any active transactions
+        db.session.rollback()  # Roll back to savepoint
+        db.session.execute("DELETE FROM users")  # Clean up any remaining records
+        db.session.commit()
         db.session.remove()  # Remove session
-        db.drop_all()  # Drop all tables
+        db.drop_all()  # Drop tables
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+        db.session.rollback()
     finally:
         ctx.pop()  # Always pop the context
 
@@ -50,7 +48,6 @@ def runner(app):
 @pytest.fixture
 def test_user(app):
     """Create a test user."""
-    # Create user and add to database
     user = User(
         email='test@example.com',
         password='password123',
@@ -65,14 +62,93 @@ def test_user(app):
     user.reset_token_expires = datetime.now(UTC) + timedelta(hours=1)
     
     db.session.add(user)
+    db.session.flush()  # Flush to ensure the user has an ID
+    
+    # Get a fresh instance to prevent detachment issues
+    user_id = user.id
     db.session.commit()
+    fresh_user = db.session.get(User, user_id)
 
-    yield user
+    yield fresh_user
 
     # Clean up
     try:
-        db.session.rollback()  # Roll back any active transaction
         db.session.query(User).filter_by(email='test@example.com').delete()
+        db.session.commit()
+    except:
+        db.session.rollback()
+        raise
+
+@pytest.fixture
+def admin_user(app):
+    """Create an admin user for testing."""
+    user = User(
+        email='admin@test.com',
+        password='password123',
+        role='admin'
+    )
+    db.session.add(user)
+    db.session.flush()  # Flush to ensure the user has an ID
+    
+    # Get a fresh instance to prevent detachment issues
+    user_id = user.id
+    db.session.commit()
+    fresh_user = db.session.get(User, user_id)
+
+    yield fresh_user
+
+    try:
+        db.session.query(User).filter_by(email='admin@test.com').delete()
+        db.session.commit()
+    except:
+        db.session.rollback()
+        raise
+
+@pytest.fixture
+def talent_lead_user(app):
+    """Create a talent lead user for testing."""
+    user = User(
+        email='talent@example.com',
+        password='talentpass123',
+        role='talent_lead'
+    )
+    db.session.add(user)
+    db.session.flush()  # Flush to ensure the user has an ID
+    
+    # Get a fresh instance to prevent detachment issues
+    user_id = user.id
+    db.session.commit()
+    fresh_user = db.session.get(User, user_id)
+
+    yield fresh_user
+
+    try:
+        db.session.query(User).filter_by(email='talent@example.com').delete()
+        db.session.commit()
+    except:
+        db.session.rollback()
+        raise
+
+@pytest.fixture
+def candidate_user(app):
+    """Create a candidate user for testing."""
+    user = User(
+        email='candidate@example.com',
+        password='candidatepass123',
+        role='candidate'
+    )
+    db.session.add(user)
+    db.session.flush()  # Flush to ensure the user has an ID
+    
+    # Get a fresh instance to prevent detachment issues
+    user_id = user.id
+    db.session.commit()
+    fresh_user = db.session.get(User, user_id)
+
+    yield fresh_user
+
+    try:
+        db.session.query(User).filter_by(email='candidate@example.com').delete()
         db.session.commit()
     except:
         db.session.rollback()

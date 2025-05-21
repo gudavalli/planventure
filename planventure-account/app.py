@@ -1,8 +1,9 @@
 import os
 from datetime import datetime, timedelta
-from flask import Flask, jsonify
+from flask import Flask, jsonify, g
 from dotenv import load_dotenv
 from extensions import db, jwt, cors
+from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity
 
 # Load environment variables
 load_dotenv()
@@ -14,13 +15,6 @@ class Config:
     # SQL Server connection string with connection pooling and encryption
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 
         'mssql+pyodbc://sa:YourStrong@Passw0rd@localhost:1433/planventure?driver=ODBC+Driver+17+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes')
-    # SQL Server connection pooling configuration
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': int(os.environ.get('DB_POOL_SIZE', 5)),  # Default pool size
-        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', 10)),  # Max connections above pool_size
-        'pool_timeout': int(os.environ.get('DB_POOL_TIMEOUT', 30)),  # Seconds to wait for connection
-        'pool_recycle': int(os.environ.get('DB_POOL_RECYCLE', 1800)),  # Recycle connections after 30 minutes
-    }
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'this-is-a-secret-key-for-jwt-at-least-32-bytes-long')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
     JWT_ERROR_MESSAGE_KEY = 'message'  # Use consistent error message key
@@ -42,6 +36,15 @@ class DevConfig(Config):
     DEBUG = True
     DEVELOPMENT = True
 
+class TestConfig(Config):
+    """Test config."""
+    TESTING = True
+    DEBUG = True
+    # Use in-memory SQLite for testing
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    # Disable CSRF tokens in testing
+    WTF_CSRF_ENABLED = False
+
 class ProdConfig(Config):
     """Production config."""
     DEBUG = False
@@ -60,14 +63,37 @@ def create_app(config_class=DevConfig):
     # Import and register blueprints
     from routes import auth_bp
     app.register_blueprint(auth_bp)
-    
+
+    # Register JWT token loader
+    @jwt.user_identity_loader
+    def user_identity_lookup(user):
+        """Convert user object to JSON serializable format."""
+        if isinstance(user, dict):
+            return str(user.get('id'))
+        if hasattr(user, 'id'):
+            return str(user.id)
+        return str(user)
+
+    # Register callback function to load user from token
+    @jwt.user_lookup_loader
+    def user_lookup_callback(_jwt_header, jwt_data):
+        """Load user from database using JWT identity."""
+        from models import User
+        identity = jwt_data["sub"]
+        user = db.session.get(User, int(identity))
+        if user:
+            g.user = user
+        return user
+
     # Create database tables
     with app.app_context():
         db.create_all()
-    
+
     @app.route('/')
     def home():
-        return jsonify({"message": "Welcome to PlanVenture Account Service"})    @app.route('/health')
+        return jsonify({"message": "Welcome to PlanVenture Account Service"})
+
+    @app.route('/health')
     def health_check():
         """Health check endpoint with database connectivity verification."""
         db_status = {
@@ -78,16 +104,21 @@ def create_app(config_class=DevConfig):
         
         try:
             # Execute a simple query to check database connectivity
-            result = db.session.execute('SELECT @@version').scalar()
-            
-            # Determine database type from the connection string
+            from sqlalchemy import text
             db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            
+            # Use database-specific version query
             if 'mssql' in db_url:
+                version_query = text('SELECT @@version')
                 db_type = "Microsoft SQL Server"
             elif 'sqlite' in db_url:
+                version_query = text('SELECT sqlite_version()')
                 db_type = "SQLite"
             else:
+                version_query = text('SELECT version()')
                 db_type = "Unknown"
+                
+            result = db.session.execute(version_query).scalar()
             
             db_status = {
                 "status": "connected",

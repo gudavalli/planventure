@@ -2,17 +2,22 @@ from datetime import datetime, timedelta, UTC
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
+from .roles import UserRole
 
 class User(db.Model):
     """User model for authentication and user management."""
-    __tablename__ = 'users'    # Primary Key
+    __tablename__ = 'users'
+    
+    # Primary Key
     id = db.Column(db.Integer, primary_key=True)
-      # SQL Server recommendation: Use nvarchar for Unicode strings
+    
+    # SQL Server recommendation: Use nvarchar for Unicode strings
     email = db.Column(db.Unicode(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.Unicode(256), nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
     last_login = db.Column(db.DateTime)
+    role = db.Column(db.Unicode(20), nullable=False, default=UserRole.CANDIDATE.value)  # Default role is CANDIDATE
 
     # Profile fields
     first_name = db.Column(db.Unicode(50))
@@ -29,11 +34,12 @@ class User(db.Model):
     reset_token = db.Column(db.String(100), unique=True)
     reset_token_expires = db.Column(db.DateTime)
 
-    def __init__(self, email, password, first_name=None, last_name=None):
+    def __init__(self, email, password, first_name=None, last_name=None, role=None):
         self.email = email
         self.set_password(password)
         self.first_name = first_name
         self.last_name = last_name
+        self.role = role if role and UserRole.has_value(role) else UserRole.CANDIDATE.value
         self.generate_verification_token()
 
     def set_password(self, password):
@@ -80,6 +86,32 @@ class User(db.Model):
             return True
         return False
 
+    def has_role(self, role):
+        """Check if user has the specified role."""
+        if isinstance(role, UserRole):
+            role = role.value
+        return self.role == role
+
+    def is_admin(self):
+        """Check if user is an admin."""
+        return self.has_role(UserRole.ADMIN)
+
+    def is_talent_lead(self):
+        """Check if user is a talent lead."""
+        return self.has_role(UserRole.TALENT_LEAD)
+
+    def is_candidate(self):
+        """Check if user is a candidate."""
+        return self.has_role(UserRole.CANDIDATE)
+
+    def set_role(self, role):
+        """Set user's role."""
+        if isinstance(role, UserRole):
+            role = role.value
+        if not UserRole.has_value(role):
+            raise ValueError(f"Invalid role: {role}")
+        self.role = role
+
     def __repr__(self):
         """String representation of the User object."""
         return f'<User {self.email}>'
@@ -94,6 +126,7 @@ class User(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'phone': self.phone,
+            'role': self.role,
             'last_login': self.last_login.isoformat() if self.last_login else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
