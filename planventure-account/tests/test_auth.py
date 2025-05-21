@@ -66,7 +66,7 @@ def test_register(client):
     """Test user registration."""
     response = client.post('/api/auth/register', json={
         'email': 'new@example.com',
-        'password': 'newpassword123'
+        'password': 'Newpassword123'
     })
     assert response.status_code == 201
     data = json.loads(response.data)
@@ -77,12 +77,12 @@ def test_register_duplicate_email(client, test_user):
     """Test registration with existing email."""
     response = client.post('/api/auth/register', json={
         'email': 'test@example.com',
-        'password': 'password123'
+        'password': 'Password123'
     })
     assert response.status_code == 409
     data = json.loads(response.data)
     assert 'error' in data
-    assert data['error'] == 'Email already registered'
+    assert data['error'] == 'Account already exists'
 
 def test_register_db_error(client, monkeypatch):
     """Test registration with database error."""
@@ -92,12 +92,15 @@ def test_register_db_error(client, monkeypatch):
     monkeypatch.setattr(db.session, 'commit', mock_commit)
     response = client.post('/api/auth/register', json={
         'email': 'new@example.com',
-        'password': 'newpassword123'
+        'password': 'Password123'
     })
-    assert response.status_code == 500
+    
+    assert response.status_code == 503
     data = json.loads(response.data)
     assert 'error' in data
+    assert data['error'] == 'Service temporarily unavailable'
     assert 'details' in data
+    assert 'database error' in data['details'].lower()
 
 def test_register_verify_email_error(client, monkeypatch):
     """Test registration with email verification error."""
@@ -107,12 +110,13 @@ def test_register_verify_email_error(client, monkeypatch):
     monkeypatch.setattr('routes.auth.send_verification_email', mock_send_email)
     response = client.post('/api/auth/register', json={
         'email': 'new@example.com',
-        'password': 'newpassword123'
+        'password': 'Password123'
     })
     # User should still be registered even if email fails
     assert response.status_code == 201
     data = json.loads(response.data)
     assert 'user' in data
+    assert 'warning' in data
 
 def test_login_success(client, test_user):
     """Test successful login."""
@@ -591,7 +595,7 @@ def test_register_with_role(client, admin_headers):
         headers=admin_headers,
         json={
             'email': 'newtalent@example.com',
-            'password': 'password123',
+            'password': 'Password123',
             'role': UserRole.TALENT_LEAD.value
         }
     )
@@ -605,7 +609,7 @@ def test_register_with_role_unauthorized(client, talent_lead_headers):
         headers=talent_lead_headers,
         json={
             'email': 'newuser@example.com',
-            'password': 'password123',
+            'password': 'Password123',
             'role': UserRole.ADMIN.value
         }
     )

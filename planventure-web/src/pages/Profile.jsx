@@ -9,8 +9,8 @@ import toast from 'react-hot-toast';
 const Profile = () => {
   const { user, updateProfile } = useAuth();
   const [formData, setFormData] = useState({
-    firstName: user?.first_name || '',
-    lastName: user?.last_name || '',
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
     phone: user?.phone || '',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -31,19 +31,15 @@ const Profile = () => {
     setPasswordData(prev => ({ ...prev, [name]: value }));
     setPasswordErrors(prev => ({ ...prev, [name]: '' }));
   };
-
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);    try {
-      await updateProfile({
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone: formData.phone,
-      });
+    setIsLoading(true);
+    try {
+      await updateProfile(formData);
       toast.success('Profile updated successfully');
     } catch (err) {
-      toast.error('Failed to update profile');
-      console.error(err);
+      toast.error(err.response?.data?.error || 'Failed to update profile');
+      console.error('Profile update error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -112,18 +108,18 @@ const Profile = () => {
                           <div className="col-md-6">
                             <Input
                               label="First Name"
-                              name="firstName"
+                              name="first_name"
                               type="text"
-                              value={formData.firstName}
+                              value={formData.first_name}
                               onChange={handleProfileChange}
                             />
                           </div>
                           <div className="col-md-6">
                             <Input
                               label="Last Name"
-                              name="lastName"
+                              name="last_name"
                               type="text"
-                              value={formData.lastName}
+                              value={formData.last_name}
                               onChange={handleProfileChange}
                             />
                           </div>

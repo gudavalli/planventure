@@ -14,58 +14,133 @@ def register():
     """Register a new user."""
     data = request.get_json()
     
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Email and password are required'}), 400
+    # Input validation
+    validation_errors = {}
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+        
+    # Email validation
+    email = data.get('email')
+    if not email:
+        validation_errors['email'] = 'Email is required'
+    elif '@' not in email or '.' not in email:
+        validation_errors['email'] = 'Invalid email format'
+        
+    # Password validation
+    password = data.get('password')
+    if not password:
+        validation_errors['password'] = 'Password is required'
+    elif len(password) < 8:
+        validation_errors['password'] = 'Password must be at least 8 characters long'
+    elif not any(c.isupper() for c in password):
+        validation_errors['password'] = 'Password must contain at least one uppercase letter'
+    elif not any(c.islower() for c in password):
+        validation_errors['password'] = 'Password must contain at least one lowercase letter'
+    elif not any(c.isdigit() for c in password):
+        validation_errors['password'] = 'Password must contain at least one number'
+        
+    # Optional fields validation
+    first_name = data.get('first_name')
+    if first_name and len(first_name) > 50:
+        validation_errors['first_name'] = 'First name must not exceed 50 characters'
+        
+    last_name = data.get('last_name')
+    if last_name and len(last_name) > 50:
+        validation_errors['last_name'] = 'Last name must not exceed 50 characters'
+        
+    if validation_errors:
+        return jsonify({
+            'error': 'Invalid input data',
+            'validation_errors': validation_errors
+        }), 400
         
     try:
+        # Check for existing user
         existing_user = db.session.execute(
-            db.select(User).filter_by(email=data['email'])
+            db.select(User).filter_by(email=email)
         ).scalar_one_or_none()
         if existing_user:
-            return jsonify({'error': 'Email already registered'}), 409
+            return jsonify({
+                'error': 'Account already exists',
+                'details': 'An account with this email address is already registered'
+            }), 409
         
         role = None
         if 'role' in data:
-            # Check if the role is valid
+            # Role validation
             if not UserRole.has_value(data['role']):
-                return jsonify({'error': 'Invalid role'}), 400
+                return jsonify({
+                    'error': 'Invalid role',
+                    'details': f"Role '{data['role']}' is not valid. Available roles: {', '.join(role.value for role in UserRole)}"
+                }), 400
                 
-            # Try to get auth token info without @jwt_required
+            # Authentication check for role assignment
             auth_header = request.headers.get('Authorization')
             if not auth_header or not auth_header.startswith('Bearer '):
-                return jsonify({'error': 'Authentication required to assign roles'}), 401
+                return jsonify({
+                    'error': 'Authentication required',
+                    'details': 'You must be authenticated as an admin to assign roles'
+                }), 401
                 
-            # Verify token and get user identity
             try:
                 verify_jwt_in_request()
                 current_user_id = get_jwt_identity()
                 if not current_user_id:
-                    return jsonify({'error': 'Authentication required to assign roles'}), 401
+                    return jsonify({
+                        'error': 'Authentication failed',
+                        'details': 'Invalid or expired authentication token'
+                    }), 401
                     
                 current_user = db.session.get(User, current_user_id)
                 if not current_user:
-                    return jsonify({'error': 'User not found'}), 404
+                    return jsonify({
+                        'error': 'User not found',
+                        'details': 'The authenticated user account was not found'
+                    }), 404
                 if not current_user.is_admin():
-                    return jsonify({'error': 'Not authorized to assign roles'}), 403
+                    return jsonify({
+                        'error': 'Not authorized',
+                        'details': 'Only administrators can assign roles'
+                    }), 403
                 
                 role = data['role']
             except Exception as jwt_error:
                 return jsonify({
                     'error': 'Authentication failed',
-                    'details': str(jwt_error),
+                    'details': 'Failed to verify authentication token',
                     'type': type(jwt_error).__name__
                 }), 401
         
-        # Create new user with role (will default to CANDIDATE if role is None)
+        # Create new user
         new_user = User(
-            email=data['email'],
-            password=data['password'],
-            first_name=data.get('first_name'),
-            last_name=data.get('last_name'),
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
             role=role
         )
         db.session.add(new_user)
         db.session.commit()
+        
+        # Attempt to send verification email
+        try:
+            verification_url = f"{request.host_url.rstrip('/')}/verify-email/{new_user.verification_token}"
+            if not send_verification_email(new_user, verification_url):
+                # Don't fail registration if email fails, but include warning in response
+                return jsonify({
+                    'message': 'User registered successfully',
+                    'warning': 'Failed to send verification email. Please contact support.',
+                    'user': new_user.to_dict()
+                }), 201
+        except Exception as email_error:
+            # Log the email error but don't fail registration
+            current_app.logger.error(f"Failed to send verification email: {str(email_error)}")
+            return jsonify({
+                'message': 'User registered successfully',
+                'warning': 'Failed to send verification email. Please contact support.',
+                'user': new_user.to_dict()
+            }), 201
         
         return jsonify({
             'message': 'User registered successfully',
@@ -74,8 +149,30 @@ def register():
     
     except Exception as e:
         db.session.rollback()
-        print(f"Registration error: {str(e)}")  # Debug log
-        return jsonify({'error': 'Registration failed', 'details': str(e)}), 500
+        # Log the full error for debugging
+        current_app.logger.error(f"Registration error: {str(e)}")
+        
+        # Determine the type of error and provide appropriate message
+        if 'duplicate key' in str(e).lower() or 'unique constraint' in str(e).lower():
+            return jsonify({
+                'error': 'Account already exists',
+                'details': 'An account with this email address is already registered'
+            }), 409
+        elif 'password' in str(e).lower():
+            return jsonify({
+                'error': 'Invalid password',
+                'details': 'The password does not meet security requirements'
+            }), 400
+        elif 'database' in str(e).lower() or 'db' in str(e).lower():
+            return jsonify({
+                'error': 'Service temporarily unavailable',
+                'details': 'Unable to create account due to a database error. Please try again later.'
+            }), 503
+        else:
+            return jsonify({
+                'error': 'Registration failed',
+                'details': 'An unexpected error occurred. Please try again later.'
+            }), 500
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
