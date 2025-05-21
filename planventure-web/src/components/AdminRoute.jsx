@@ -14,8 +14,7 @@ const AdminRoute = ({ children }) => {
       </div>
     );
   }
-
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || user.role !== 'admin') {
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 

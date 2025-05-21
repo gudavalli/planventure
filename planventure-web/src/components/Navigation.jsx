@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,10 +7,7 @@ const navigation = [
 ];
 
 const Navigation = () => {
-  const { user, logout } = useAuth();
-  const dropdownRef = useRef(null);
-
-  const handleLogout = (e) => {
+  const { user, logout } = useAuth();  const handleLogout = (e) => {
     e.preventDefault();
     logout();
   };
@@ -19,7 +15,7 @@ const Navigation = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/">PlanVenture</Link>
+        <Link className="navbar-brand" to={user?.role === 'admin' ? '/users' : '/dashboard'}>PlanVenture</Link>
         <button 
           className="navbar-toggler" 
           type="button" 
@@ -34,7 +30,7 @@ const Navigation = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             {navigation.map((item) => (
-              (!item.adminOnly || (user && user.role === 'ADMIN')) && (
+              (!item.adminOnly || (user && user.role === 'admin')) && (
                 <li className="nav-item" key={item.name}>
                   <Link 
                     className="nav-link" 

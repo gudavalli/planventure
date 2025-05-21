@@ -72,6 +72,11 @@ export const authService = {
     return response.data;
   },
 
+  getRoles: async () => {
+    const response = await api.get('/auth/roles');
+    return response.data;
+  },
+
   updateUserRole: async (userId, role) => {
     const response = await api.put(`/auth/users/${userId}/role`, { role });
     return response.data;
