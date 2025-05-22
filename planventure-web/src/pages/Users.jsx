@@ -1,51 +1,103 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Button from '../components/Button';
 import { authService } from '../services/api';
 import toast from 'react-hot-toast';
 
+import { useApiErrorHandler } from '../hooks/useApiErrorHandler';
+import { debounce } from '../utils/apiUtils';
+
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatingUserIds, setUpdatingUserIds] = useState(new Set());  const { handleError } = useApiErrorHandler();
 
-  useEffect(() => {
-    loadUsers();
-    loadRoles();
-  }, []);
-
-  const loadUsers = async () => {
-    try {
-      const data = await authService.getAllUsers();
-      setUsers(data.users);
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to load users');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadRoles = async () => {
+  const loadRoles = useCallback(async () => {
     try {
       const response = await authService.getRoles();
       setRoles(response.roles);
     } catch (error) {
-      toast.error('Failed to load roles');
+      handleError(error);
+    }
+  }, [handleError]);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      const data = await authService.getAllUsers();
+      setUsers(data.users);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleError]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const initializeData = async () => {
+      try {
+        await Promise.all([
+          loadUsers(),
+          loadRoles()
+        ]);
+      } catch (error) {
+        if (isMounted) {
+          handleError(error);
+        }
+      }
+    };
+
+    initializeData();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [loadUsers, loadRoles, handleError]);
+  const debouncedLoadUsers = useCallback(() => {
+    debounce(() => loadUsers(), 1000)();
+  }, [loadUsers]);
+
+  const handleRoleChange = async (userId, newRole) => {
+    setUpdatingUserIds(prev => new Set([...prev, userId]));
+    try {
+      if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+        return;
+      }
+      await authService.updateUserRole(userId, newRole);
+      toast.success('User role updated successfully');
+      debouncedLoadUsers();
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setUpdatingUserIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
-  const handleRoleChange = async (userId, newRole) => {
-    setIsUpdating(true);
+  const handleResetPassword = async (userId) => {
+    setUpdatingUserIds(prev => new Set([...prev, userId]));
     try {
-      await authService.updateUserRole(userId, newRole);
-      toast.success('User role updated successfully');
-      loadUsers(); // Refresh the user list
+      if (!window.confirm('Are you sure you want to reset this user\'s password?')) {
+        return;
+      }
+      await authService.resetUserPassword(userId);
+      toast.success('Password reset email sent successfully');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to update user role');
+      handleError(error);
     } finally {
-      setIsUpdating(false);
+      setUpdatingUserIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
@@ -92,7 +144,7 @@ const Users = () => {
                           className="form-select form-select-sm"
                           value={user.role}
                           onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                          disabled={isUpdating}
+                          disabled={updatingUserIds.has(user.id)}
                         >
                           {roles.map(role => (
                             <option key={role.value} value={role.value}>
@@ -111,7 +163,7 @@ const Users = () => {
                           variant="outline"
                           size="sm"
                           className="me-2"
-                          disabled={isUpdating}
+                          disabled={updatingUserIds.has(user.id)}
                           onClick={() => handleResetPassword(user.id)}
                         >
                           Reset Password

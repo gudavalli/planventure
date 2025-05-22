@@ -1,34 +1,14 @@
-import axios from 'axios';
+import { createAxiosInstance } from './axiosConfig';
 
-const BASE_URL = 'http://localhost:5000/api';
-
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests if it exists
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+const api = createAxiosInstance();
 
 export const authService = {
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
     return response.data;
   },
-
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
-    if (response.data.access_token) {
-      localStorage.setItem('token', response.data.access_token);
-    }
     return response.data;
   },
 
@@ -49,8 +29,7 @@ export const authService = {
   verifyEmail: async (token) => {
     const response = await api.get(`/auth/verify-email/${token}`);
     return response.data;
-  },
-  getCurrentUser: async () => {
+  },  getCurrentUser: async () => {
     const response = await api.get('/auth/me');
     return response.data;
   },
@@ -79,6 +58,11 @@ export const authService = {
 
   updateUserRole: async (userId, role) => {
     const response = await api.put(`/auth/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  resetUserPassword: async (userId) => {
+    const response = await api.post(`/auth/users/${userId}/reset-password`);
     return response.data;
   },
 };

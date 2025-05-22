@@ -1,5 +1,5 @@
 import Navigation from '../components/Navigation';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth-hooks';
 
 const Dashboard = () => {
   const { user } = useAuth();

@@ -1,11 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { authService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { AuthContext } from './auth-context';
 
-const AuthContext = createContext(null);
-
-export const AuthProvider = ({ children }) => {
+function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -13,13 +12,22 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        if (localStorage.getItem('token')) {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        try {
           const userData = await authService.getCurrentUser();
           setUser(userData);
+        } catch (error) {
+          console.error('Failed to load user:', error);
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            setUser(null);
+          }
         }
-      } catch (error) {
-        console.error('Failed to load user:', error);
-        localStorage.removeItem('token');
       } finally {
         setLoading(false);
       }
@@ -32,7 +40,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const responseData = await authService.login(credentials);
       if (responseData.access_token) {
-        // Fetch user data after successful login
+        localStorage.setItem('token', responseData.access_token);
         const userData = await authService.getCurrentUser();
         setUser(userData);
         toast.success('Login successful!');
@@ -50,11 +58,20 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
+
   const register = async (userData) => {
     try {
-      await authService.register(userData);
-      toast.success('Registration successful! Please verify your email.');
-      navigate('/login');
+      const response = await authService.register(userData);
+      if (response.access_token) {
+        localStorage.setItem('token', response.access_token);
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+        toast.success('Registration successful! Please verify your email.');
+        navigate('/dashboard');
+      } else {
+        toast.success('Registration successful! Please verify your email.');
+        navigate('/login');
+      }
       return true;
     } catch (error) {
       toast.error(error.response?.data?.error || 'Registration failed');
@@ -68,6 +85,7 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
     toast.success('Logged out successfully');
   };
+
   const updateProfile = async (userData) => {
     try {
       const responseData = await authService.updateProfile(userData);
@@ -94,12 +112,6 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export default AuthProvider;

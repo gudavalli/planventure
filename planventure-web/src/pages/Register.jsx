@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth-hooks';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import FormError from '../components/FormError';
@@ -9,8 +9,8 @@ const Register = () => {  const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -27,9 +27,8 @@ const Register = () => {  const [formData, setFormData] = useState({
     }
   };
   const validate = () => {
-    const newErrors = {};
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
+    const newErrors = {};    if (!formData.first_name) newErrors.first_name = 'First name is required';
+    if (!formData.last_name) newErrors.last_name = 'Last name is required';
     
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid email address';
@@ -88,22 +87,20 @@ const Register = () => {  const [formData, setFormData] = useState({
                 <div className="row g-3">
                   <div className="col-md-6">
                     <Input
-                      label="First Name"
-                      name="firstName"
-                      value={formData.firstName}
+                      label="First Name"                      name="first_name"
+                      value={formData.first_name}
                       onChange={handleChange}
-                      error={errors.firstName}
+                      error={errors.first_name}
                       autoComplete="given-name"
                     />
                   </div>
                   
                   <div className="col-md-6">
                     <Input
-                      label="Last Name"
-                      name="lastName"
-                      value={formData.lastName}
+                      label="Last Name"                      name="last_name"
+                      value={formData.last_name}
                       onChange={handleChange}
-                      error={errors.lastName}
+                      error={errors.last_name}
                       autoComplete="family-name"
                     />
                   </div>

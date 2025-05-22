@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider } from '../context/AuthContext';
+import AuthProvider from '../context/AuthContext';
 import Users from '../pages/Users';
 import { authService } from '../services/api';
 import toast from 'react-hot-toast';

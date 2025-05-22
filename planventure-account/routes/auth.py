@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, UTC
 from flask import Blueprint, request, jsonify, url_for, current_app
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
+from flask_cors import cross_origin
 from app import db
 from models import User
 from models.roles import UserRole
@@ -495,3 +496,45 @@ def list_users():
         }), 200
     except Exception as e:
         return jsonify({'error': 'Failed to list users', 'details': str(e)}), 500
+
+@auth_bp.route('/users/<int:user_id>/reset-password', methods=['POST'])
+@cross_origin()
+@jwt_required()
+@role_required(UserRole.ADMIN)
+def admin_reset_user_password(user_id):
+    """Reset user password. Only admins can perform this action."""
+    try:
+        user = db.session.get(User, user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        token = user.generate_reset_token()
+        db.session.flush()  # Flush changes before sending email
+        
+        # Use environment variable for frontend URL, fallback to request host
+        frontend_url = current_app.config.get('FRONTEND_URL', request.host_url.rstrip('/'))
+        reset_url = f"{frontend_url}/reset-password/{token}"
+        
+        # If email is disabled, just send token in response
+        if not current_app.config.get('EMAIL_ENABLED', True):
+            db.session.commit()
+            return jsonify({
+                'message': 'Password reset token generated',
+                'reset_token': token,
+                'reset_url': reset_url
+            }), 200
+            
+        if send_password_reset_email(user, reset_url):
+            db.session.commit()
+            return jsonify({'message': 'Password reset instructions sent'}), 200
+        else:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to send reset email'}), 500
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Password reset error: {str(e)}")
+        return jsonify({
+            'error': 'Failed to process password reset request',
+            'details': str(e),
+            'type': type(e).__name__
+        }), 500

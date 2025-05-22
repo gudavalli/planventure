@@ -55,15 +55,52 @@ def create_app(config_class=DevConfig):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Initialize extensions
-    cors.init_app(app)
+    # Load environment variables
+    app.config['FRONTEND_URL'] = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+    app.config['EMAIL_ENABLED'] = os.environ.get('EMAIL_ENABLED', 'false').lower() == 'true'
+    
+    # Configure CORS
+    app.config['CORS_ORIGINS'] = ['http://localhost:5173', 'http://localhost:3000']  # Add any other origins you need
+    app.config['CORS_ALLOW_HEADERS'] = ['Content-Type', 'Authorization']
+    app.config['CORS_EXPOSE_HEADERS'] = ['Authorization']
+    app.config['CORS_SUPPORTS_CREDENTIALS'] = True
+    app.config['CORS_METHODS'] = ['GET', 'HEAD', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE']
+    app.config['CORS_AUTOMATIC_OPTIONS'] = True
+    app.config['CORS_SEND_WILDCARD'] = False
+    
+    # Initialize extensions with CORS configuration
+    cors.init_app(
+        app,
+        resources={
+            r"/*": {  # Match all routes
+                "origins": ['http://localhost:5173', 'http://localhost:3000'],  # Match CORS_ORIGINS
+                "methods": ["GET", "HEAD", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "expose_headers": ["Authorization"],
+                "supports_credentials": True,
+                "allow_headers": ["Content-Type", "Authorization"],
+                "expose_headers": ["Authorization"],
+                "supports_credentials": True
+            }
+        },
+        supports_credentials=True,
+        automatic_options=True,
+        send_wildcard=False
+    )
+    
     db.init_app(app)
     jwt.init_app(app)
-    
-    # Import and register blueprints
+
+    # Register blueprints
     from routes import auth_bp
     app.register_blueprint(auth_bp)
 
+    # Global OPTIONS handler for CORS preflight requests
+    @app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+    @app.route('/<path:path>', methods=['OPTIONS'])
+    def handle_options(path):
+        return '', 204  # Return empty response with 204 No Content status
+    
     # Register JWT token loader
     @jwt.user_identity_loader
     def user_identity_lookup(user):
