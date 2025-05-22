@@ -4,6 +4,7 @@ import { useAuth } from '../context/auth-hooks';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Users', href: '/users', adminOnly: true },
+  { name: 'Assessments', href: '/assessments', roles: ['admin', 'talent_lead'] },
 ];
 
 const Navigation = () => {
@@ -27,10 +28,22 @@ const Navigation = () => {
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            {navigation.map((item) => (
-              (!item.adminOnly || (user && user.role === 'admin')) && (
+        <div className="collapse navbar-collapse" id="navbarNav">          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            {navigation.map((item) => {
+              // Check if the item should be displayed based on role
+              let showItem = true;
+              
+              // Admin-only items
+              if (item.adminOnly && (!user || user.role !== 'admin')) {
+                showItem = false;
+              }
+              
+              // Role-specific items
+              if (item.roles && (!user || !item.roles.includes(user.role))) {
+                showItem = false;
+              }
+              
+              return showItem && (
                 <li className="nav-item" key={item.name}>
                   <Link 
                     className="nav-link" 
@@ -39,8 +52,8 @@ const Navigation = () => {
                     {item.name}
                   </Link>
                 </li>
-              )
-            ))}
+              );
+            })}
           </ul>
           <div className="dropdown">
             <button 

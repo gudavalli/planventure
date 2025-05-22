@@ -1,6 +1,9 @@
 import { createAxiosInstance } from './axiosConfig';
+import { assessmentService } from './assessmentApi';
 
 const api = createAxiosInstance();
+
+export { assessmentService };
 
 export const authService = {
   register: async (userData) => {

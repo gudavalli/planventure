@@ -25,9 +25,7 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="row mt-4">
+        </div>        <div className="row mt-4">
           <div className="col-md-6 mb-4">
             <div className="card h-100">
               <div className="card-header">
@@ -42,10 +40,23 @@ const Dashboard = () => {
           <div className="col-md-6 mb-4">
             <div className="card h-100">
               <div className="card-header">
-                Upcoming Plans
+                {user?.role === 'candidate' ? 'Upcoming Assessments' : 'Quick Actions'}
               </div>
               <div className="card-body">
-                <p className="card-text">No upcoming plans to display.</p>
+                {user?.role === 'candidate' ? (
+                  <p className="card-text">No upcoming assessments to display.</p>
+                ) : user?.role === 'talent_lead' || user?.role === 'admin' ? (
+                  <div className="d-grid gap-2">
+                    <a href="/assessments" className="btn btn-primary">
+                      <i className="bi bi-list-check me-2"></i> Manage Assessments
+                    </a>
+                    <a href="/assessments/templates/create" className="btn btn-outline-primary">
+                      <i className="bi bi-file-earmark-plus me-2"></i> Create Assessment Template
+                    </a>
+                  </div>
+                ) : (
+                  <p className="card-text">No upcoming plans to display.</p>
+                )}
               </div>
             </div>
           </div>

@@ -1,0 +1,105 @@
+/* Print styles for assessment reports */
+
+@media print {
+  /* Hide unnecessary elements when printing */
+  .d-print-none,
+  nav,
+  footer,
+  .nav,
+  .sidebar,
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure background colors are printed */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Full-width container */
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Remove shadows and borders to save ink */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+  }
+  
+  /* Ensure proper page breaks */
+  .pdf-content {
+    page-break-before: avoid;
+    page-break-after: avoid;
+    page-break-inside: auto;
+  }
+  
+  .page-break {
+    page-break-before: always;
+  }
+  
+  /* Typography adjustments */
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+  
+  /* Table styles */
+  table {
+    border-collapse: collapse !important;
+  }
+  
+  table td,
+  table th {
+    background-color: #fff !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  /* Adjust badge colors for print */
+  .badge.bg-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+  }
+  
+  .badge.bg-primary {
+    background-color: #007bff !important;
+    color: #fff !important;
+  }
+  
+  .badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+  }
+  
+  .badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+  }
+  
+  /* Add assessment logo/header */
+  .print-header {
+    display: block !important;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+  }
+  
+  .print-header h1 {
+    font-size: 18pt;
+  }
+  
+  /* Add page numbers */
+  @page {
+    margin: 0.5cm 1cm;
+  }
+}

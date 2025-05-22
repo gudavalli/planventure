@@ -4,6 +4,9 @@ import Navigation from './components/Navigation'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import RoleBasedRedirect from './components/RoleBasedRedirect'
+import { TalentLeadRoute } from './components/assessment'
+
+// Auth & User Pages
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -12,7 +15,20 @@ import Users from './pages/Users'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
+
+// Assessment Pages
+import Assessments from './pages/Assessments'
+import CreateAssessmentTemplate from './pages/CreateAssessmentTemplate'
+import AssessmentTemplateDetails from './pages/AssessmentTemplateDetails'
+import AssessmentTemplateAnalytics from './pages/AssessmentTemplateAnalytics'
+import AssessmentQuestions from './pages/AssessmentQuestions'
+import CreateAssessmentQuestion from './pages/CreateAssessmentQuestion'
+import EditAssessmentQuestion from './pages/EditAssessmentQuestion'
+import AssessmentTake from './pages/AssessmentTake'
+import AssessmentResult from './pages/AssessmentResult'
+
 import './App.css'
+import './styles/print.css'
 
 function App() {
   return (
@@ -64,6 +80,76 @@ function App() {
             />
             
             {/* Catch all route - redirect to root */}
+            {/* Assessment routes for talent leads and admins */}
+            <Route
+              path="/assessments"
+              element={
+                <TalentLeadRoute>
+                  <Assessments />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/templates/create"
+              element={
+                <TalentLeadRoute>
+                  <CreateAssessmentTemplate />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/templates/:templateId"
+              element={
+                <TalentLeadRoute>
+                  <AssessmentTemplateDetails />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/templates/:templateId/analytics"
+              element={
+                <TalentLeadRoute>
+                  <AssessmentTemplateAnalytics />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/questions"
+              element={
+                <TalentLeadRoute>
+                  <AssessmentQuestions />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/questions/create"
+              element={
+                <TalentLeadRoute>
+                  <CreateAssessmentQuestion />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/questions/:questionId/edit"
+              element={
+                <TalentLeadRoute>
+                  <EditAssessmentQuestion />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/results/:assessmentId"
+              element={
+                <TalentLeadRoute>
+                  <AssessmentResult />
+                </TalentLeadRoute>
+              }
+            />
+
+            {/* Public assessment routes (accessible via token) */}
+            <Route path="/assessment/:assessmentId" element={<AssessmentTake />} />
+            <Route path="/assessment/results/:assessmentId" element={<AssessmentResult />} />
+            
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

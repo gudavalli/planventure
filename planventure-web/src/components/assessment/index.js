@@ -1,0 +1,11 @@
+export { default as TalentLeadRoute } from './TalentLeadRoute';
+export { default as AssessmentDashboard } from './AssessmentDashboard';
+export { default as CreateTemplate } from './CreateTemplate';
+export { default as TemplateDetails } from './TemplateDetails';
+export { default as ManageQuestions } from './ManageQuestions';
+export { default as TakeAssessment } from './TakeAssessment';
+export { default as AssessmentResults } from './AssessmentResults';
+export { default as EditQuestion } from './EditQuestion';
+export { default as CreateQuestion } from './CreateQuestion';
+export { default as TemplateAnalytics } from './TemplateAnalytics';
+export { default as PDFExport } from './PDFExport';
