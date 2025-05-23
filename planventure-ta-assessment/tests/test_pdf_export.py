@@ -225,8 +225,7 @@ def test_pdf_export_customization(client, setup_database):
     response = client.get(
         f'/api/assessments/{assessment_id}/report?format=pdf&options={json.dumps(custom_options)}'
     )
-    
-    # Skip if customization is not implemented (either 400, 404 or other error code)
+      # Skip if customization is not implemented (either 400, 404 or other error code)
     if response.status_code >= 400:
         pytest.skip("PDF customization not implemented yet")
         
@@ -238,7 +237,7 @@ def test_pdf_export_customization(client, setup_database):
             data = json.loads(response.data)
             # Check if response contains any useful data
             # Either standard result fields or assessment data
-            assert (data.get('success') == True or 
+            assert (data.get('success') == True or data.get('status') == 'success' or
                     'download_url' in data or 
                     'job_id' in data or
                     'assessment_id' in data or

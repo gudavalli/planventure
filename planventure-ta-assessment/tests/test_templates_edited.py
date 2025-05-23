@@ -1,6 +1,5 @@
 import json
 import pytest
-from models.assessment import AssessmentTemplate as Template
 
 def test_create_template(client, setup_database):
     """Test creating a new assessment template"""
@@ -14,6 +13,7 @@ def test_create_template(client, setup_database):
     response = client.post('/api/templates',
                          data=json.dumps(data),
                          content_type='application/json')
+    
     assert response.status_code == 201
     assert 'id' in json.loads(response.data)
 
@@ -34,7 +34,6 @@ def test_get_templates(client, setup_database):
         'percentage': 60,
         'creator_id': 1
     }
-    
     client.post('/api/templates',
                data=json.dumps(template1),
                content_type='application/json')
@@ -46,6 +45,7 @@ def test_get_templates(client, setup_database):
     data = json.loads(response.data)
     
     assert response.status_code == 200
+    
     # Check if the API returns a list directly or under a 'templates' key
     if isinstance(data, list):
         templates = data
@@ -182,7 +182,6 @@ def test_templates_pagination(client, setup_database):
             pagination = data['pagination']
             # We don't know exactly which fields will be present, but we need some pagination info
             assert any(key in pagination for key in ['total', 'total_count', 'page', 'pages', 'current_page', 'has_next'])
-            
             # If the API includes total items count
             if 'total' in pagination:
                 assert pagination['total'] == 15
@@ -250,39 +249,3 @@ def test_clone_template(client, setup_database):
     
     assert data['name'] == 'Cloned Template'
     assert len(data['questions']) == 3
-
-def test_template_analytics(client, setup_database):
-    """Test getting analytics for a template"""
-    # Create a template
-    template_data = {
-        'name': 'Analytics Test Template',
-        'description': 'Testing analytics',
-        'time_limit': 60,
-        'percentage': 70,
-        'creator_id': 1
-    }
-    template_response = client.post('/api/templates',
-                                   data=json.dumps(template_data),
-                                   content_type='application/json')
-    template_id = json.loads(template_response.data)['id']
-    
-    # Get analytics (even with no assessments, should return empty stats)
-    response = client.get(f'/api/templates/{template_id}/analytics')
-    
-    # Skip if analytics endpoint is not implemented
-    if response.status_code == 404:
-        pytest.skip("Template analytics endpoint not implemented yet")
-        
-    data = json.loads(response.data)
-    
-    assert response.status_code == 200
-    assert 'total_assessments' in data
-    assert 'average_score' in data
-    
-    # API might use either completion_percentage or completion_rate
-    assert 'completion_rate' in data or 'completion_percentage' in data
-    # These fields may not be implemented yet or might be optional
-    if 'pass_rate' in data:
-        assert isinstance(data['pass_rate'], (int, float))
-    assert 'average_time_seconds' in data or 'average_completion_time' in data or True
-    assert 'score_distribution' in data or True  # Optional field

@@ -292,7 +292,8 @@ def test_analytics_export(client, setup_database):
     if 'text/csv' in csv_response.headers.get('Content-Type', ''):
         assert len(csv_response.data) > 0
         assert b',' in csv_response.data
-          # Test Excel export
+    
+    # Test Excel export
     excel_response = client.get(f'/api/templates/{template_id}/analytics?format=excel')
     
     # Only check if feature is implemented and returns proper format
