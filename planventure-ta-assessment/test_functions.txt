@@ -1,0 +1,236 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-6.2.5, py-1.11.0, pluggy-1.6.0 -- C:\Users\sreen\learning\copilot-agent\planventure\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\sreen\learning\copilot-agent\planventure\planventure-ta-assessment, configfile: pytest.ini
+plugins: Faker-37.3.0, cov-4.1.0, flask-1.3.0
+collecting ... collected 104 items
+
+<Package tests>
+  <Module test_advanced_features.py>
+    <Function test_edit_question>
+      Test editing an existing question
+    <Function test_template_clone>
+      Test cloning an assessment template with all questions
+    <Function test_template_analytics_data>
+      Test the template analytics data includes all required metrics
+    <Function test_pdf_export_functionality>
+      Test PDF export functionality for assessment results
+    <Function test_question_batch_operations>
+      Test batch operations for questions
+  <Module test_analytics_dashboard.py>
+    <Function test_template_analytics>
+      Test getting analytics for a template
+    <Function test_dashboard_analytics_filters>
+      Test filtering analytics dashboard data
+    <Function test_global_analytics_dashboard>
+      Test global analytics dashboard with all templates
+    <Function test_analytics_export>
+      Test exporting analytics data in different formats
+  <Module test_assessment_progression.py>
+    <Function test_random_question_selection>
+      Test that questions are randomly selected based on template percentage
+    <Function test_time_limit_tracking>
+      Test assessment time limit tracking
+    <Function test_sequential_question_progression>
+      Test questions are presented sequentially
+    <Function test_score_calculation>
+      Test assessment score calculation
+    <Function test_detailed_response_report>
+      Test generating detailed response report
+    <Function test_email_verification_and_link_access>
+      Test email verification and assessment link access
+    <Function test_admin_analytics_report>
+      Test admin analytics report generation
+  <Module test_assessments.py>
+    <Function test_create_template>
+      Test creating a new assessment template
+    <Function test_create_template_invalid_data>
+      Test creating a template with missing required fields
+    <Function test_add_questions_to_template>
+      Test adding questions to a template
+    <Function test_create_assessment>
+      Test creating a new assessment
+    <Function test_start_assessment>
+      Test starting an assessment
+    <Function test_start_assessment_already_started>
+      Test starting an already started assessment
+    <Function test_list_templates>
+      Test listing assessment templates
+    <Function test_list_templates_pagination>
+      Test template listing with pagination and filters
+    <Function test_list_assessments>
+      Test listing assessments
+    <Function test_list_assessments_pagination>
+      Test assessment listing with pagination and filters
+  <Module test_error_handling.py>
+    <Function test_edit_question_not_found>
+      Test editing a non-existent question
+    <Function test_edit_question_with_invalid_json>
+      Test editing a question with invalid JSON data
+    <Function test_template_clone_with_large_template>
+      Test cloning a template with many questions
+    <Function test_analytics_with_no_assessments>
+      Test analytics for a template with no completed assessments
+    <Function test_analytics_with_incomplete_assessments>
+      Test analytics with a mix of complete and incomplete assessments
+    <Function test_pdf_export_error_handling>
+      Test error handling for PDF export
+  <Module test_feature_validation.py>
+    <Function test_question_editing_validation>
+      Test validation for question editing
+    <Function test_template_clone_validation>
+      Test validation for template cloning
+    <Function test_template_analytics_filtering>
+      Test analytics with date range filtering
+    <Function test_pdf_export_detailed_results>
+      Test PDF export with detailed results option
+    <Function test_question_filtering_by_specialization>
+      Test filtering questions by specialization
+  <Module test_frontend_integration.py>
+    <Function test_template_analytics_api_format>
+      Test that template analytics API returns data in the format expected by the frontend
+    <Function test_pdf_export_api_formatting>
+      Test that PDF export API provides correctly formatted data
+    <Function test_question_editor_api_integration>
+      Test that the question editing API supports all the fields needed by the frontend editor
+    <Function test_template_clone_with_custom_fields>
+      Test cloning a template with custom fields and settings
+  <Module test_new_features_edited.py>
+    <Function test_templates_pagination>
+      Test pagination for templates API
+    <Function test_clone_template>
+      Test cloning a template with its questions
+    <Function test_questions_pagination>
+      Test pagination for questions API
+  <Module test_pdf_export.py>
+    <Function test_pdf_export_assessment_report>
+      Test getting assessment report with PDF format option
+    <Function test_pdf_export_batch_reports>
+      Test generating PDF reports in batch for multiple assessments
+    <Function test_pdf_export_customization>
+      Test customizing PDF report format and content
+  <Module test_question_editing.py>
+    <Function test_create_question>
+      Test creating a new question
+    <Function test_update_question>
+      Test updating an existing question
+    <Function test_add_question_tags>
+      Test adding tags to a question
+    <Function test_search_questions_by_tag>
+      Test searching for questions by tag
+    <Function test_bulk_question_operations>
+      Test bulk operations for questions (like deleting multiple at once)
+  <Module test_questions.py>
+    <Function test_create_question>
+      Test creating a new question
+    <Function test_create_question_invalid_data>
+      Test creating a question with missing required fields
+    <Function test_get_questions>
+      Test getting all questions
+    <Function test_get_questions_by_specialization>
+      Test filtering questions by specialization
+    <Function test_update_question>
+      Test updating a question
+    <Function test_delete_question>
+      Test deleting a question
+    <Function test_create_aptitude_question>
+      Test creating an aptitude question with options
+    <Function test_create_reading_comprehension_set>
+      Test creating a reading comprehension set with paragraph and questions
+    <Function test_create_typing_question>
+      Test creating a typing question
+    <Function test_validate_typing_response>
+      Test validating a typing response for accuracy and speed
+    <Function test_invalid_typing_response>
+      Test typing response with errors
+  <Module test_templates.py>
+    <Function test_create_template>
+      Test creating a new assessment template
+    <Function test_get_templates>
+      Test getting all templates
+    <Function test_get_template_details>
+      Test getting a specific template with its questions
+    <Function test_update_template>
+      Test updating a template
+    <Function test_templates_pagination>
+      Test pagination for templates API
+    <Function test_clone_template>
+      Test cloning a template with its questions
+    <Function test_template_analytics>
+      Test getting analytics for a template
+  <Module test_typing_questions.py>
+    <Function test_typing_empty_response>
+      Test typing validation with empty response
+    <Function test_typing_special_characters>
+      Test typing validation with special characters
+    <Function test_typing_wpm_calculation>
+      Test words per minute calculation at different speeds
+    <Function test_typing_long_text>
+      Test typing validation with very long text
+<Module tests/backup/test_enhanced_features.py>
+  <Function test_edit_question>
+    Test editing an existing question
+  <Function test_template_clone>
+    Test cloning an assessment template with all questions
+  <Function test_template_analytics_data>
+    Test the template analytics data includes all required metrics
+  <Function test_pdf_export_functionality>
+    Test PDF export functionality for assessment results
+<Module tests/backup/test_new_features.py>
+  <Function test_templates_pagination>
+    Test pagination for templates API
+  <Function test_clone_template>
+    Test cloning a template with its questions
+  <Function test_template_analytics>
+    Test getting analytics for a template
+  <Function test_questions_pagination>
+    Test pagination for questions API
+  <Function test_pdf_export_assessment_report>
+    Test getting assessment report with PDF format option
+<Module tests/backup/test_templates.py>
+  <Function test_create_template>
+    Test creating a new assessment template
+  <Function test_get_templates>
+    Test getting all templates
+  <Function test_get_template_details>
+    Test getting a specific template with its questions
+  <Function test_update_template>
+    Test updating a template
+  <Function test_templates_pagination>
+    Test pagination for templates API
+  <Function test_clone_template>
+    Test cloning a template with its questions
+  <Function test_template_analytics>
+    Test getting analytics for a template
+<Module tests/backup/test_templates_fixed.py>
+  <Function test_create_template>
+    Test creating a new assessment template
+  <Function test_get_templates>
+    Test getting all templates
+  <Function test_get_template_details>
+    Test getting a specific template with its questions
+  <Function test_update_template>
+    Test updating a template
+  <Function test_templates_pagination>
+    Test pagination for templates API
+  <Function test_clone_template>
+    Test cloning a template with its questions
+  <Function test_template_analytics>
+    Test getting analytics for a template
+<Module tests/backup/test_templates_updated.py>
+  <Function test_create_template>
+    Test creating a new assessment template
+  <Function test_get_templates>
+    Test getting all templates
+  <Function test_get_template_details>
+    Test getting a specific template with its questions
+  <Function test_update_template>
+    Test updating a template
+  <Function test_templates_pagination>
+    Test pagination for templates API
+  <Function test_clone_template>
+    Test cloning a template with its questions
+  <Function test_template_analytics>
+    Test getting analytics for a template
+
+======================== 104 tests collected in 0.26s =========================
