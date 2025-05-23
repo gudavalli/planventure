@@ -2,6 +2,8 @@ import json
 import pytest
 from models.assessment import AssessmentTemplate as Template
 
+# Updated test file with proper error handling for unimplemented endpoints
+
 def test_create_template(client, setup_database):
     """Test creating a new assessment template"""
     data = {
@@ -176,18 +178,21 @@ def test_templates_pagination(client, setup_database):
     else:
         assert 'templates' in data
         assert len(data['templates']) == 10
-        
-        # Check if pagination info is provided - fields may vary by API implementation
-        if 'pagination' in data:
-            pagination = data['pagination']
-            # We don't know exactly which fields will be present, but we need some pagination info
-            assert any(key in pagination for key in ['total', 'total_count', 'page', 'pages', 'current_page', 'has_next'])
-            
-            # If the API includes total items count
-            if 'total' in pagination:
-                assert pagination['total'] == 15
-            elif 'total_count' in pagination:
-                assert pagination['total_count'] == 15
+    # Check if pagination info is provided
+            if 'pagination' in data:
+                # Different APIs might use different pagination formats
+                # Check for common pagination fields
+                assert any(field in data['pagination'] for field in ['total', 'page', 'pages', 'current_page'])
+                
+                # If total is available, check the value
+                if 'total' in data['pagination']:
+                    assert data['pagination']['total'] == 15
+                # Some APIs might use total_count instead of total
+                elif 'total_count' in data['pagination']:
+                    assert data['pagination']['total_count'] == 15
+                # Or they might include the page count
+                elif 'total_pages' in data['pagination']:
+                    assert data['pagination']['total_pages'] >= 2
 
 def test_clone_template(client, setup_database):
     """Test cloning a template with its questions"""
@@ -241,11 +246,6 @@ def test_clone_template(client, setup_database):
     
     # Verify the clone has all the questions from the original
     response = client.get(f'/api/templates/{cloned_id}')
-    
-    # Skip if details endpoint not implemented
-    if response.status_code == 404:
-        pytest.skip("Template details endpoint not implemented yet")
-        
     data = json.loads(response.data)
     
     assert data['name'] == 'Cloned Template'
@@ -268,18 +268,12 @@ def test_template_analytics(client, setup_database):
     
     # Get analytics (even with no assessments, should return empty stats)
     response = client.get(f'/api/templates/{template_id}/analytics')
-    
-    # Skip if analytics endpoint is not implemented
-    if response.status_code == 404:
-        pytest.skip("Template analytics endpoint not implemented yet")
-        
     data = json.loads(response.data)
     
     assert response.status_code == 200
     assert 'total_assessments' in data
     assert 'average_score' in data
-    
-    # API might use either completion_percentage or completion_rate
+      # API might use either completion_percentage or completion_rate
     assert 'completion_rate' in data or 'completion_percentage' in data
     # These fields may not be implemented yet or might be optional
     if 'pass_rate' in data:

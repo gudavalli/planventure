@@ -89,11 +89,6 @@ def test_get_template_details(client, setup_database):
     
     # Get the template details
     response = client.get(f'/api/templates/{template_id}')
-    
-    # Skip if endpoint not implemented
-    if response.status_code == 404:
-        pytest.skip("Template details endpoint not implemented yet")
-        
     data = json.loads(response.data)
     
     assert response.status_code == 200
@@ -127,19 +122,10 @@ def test_update_template(client, setup_database):
                          data=json.dumps(update_data),
                          content_type='application/json')
     
-    # Skip if update endpoint not implemented
-    if response.status_code == 404:
-        pytest.skip("Template update endpoint not implemented yet")
-        
     assert response.status_code == 200
     
     # Verify the update worked
     response = client.get(f'/api/templates/{template_id}')
-    
-    # Skip if get endpoint not implemented
-    if response.status_code == 404:
-        pytest.skip("Template details endpoint not implemented yet")
-        
     data = json.loads(response.data)
     
     assert data['name'] == 'Updated Template'
@@ -176,18 +162,10 @@ def test_templates_pagination(client, setup_database):
     else:
         assert 'templates' in data
         assert len(data['templates']) == 10
-        
-        # Check if pagination info is provided - fields may vary by API implementation
+        # Check if pagination info is provided
         if 'pagination' in data:
-            pagination = data['pagination']
-            # We don't know exactly which fields will be present, but we need some pagination info
-            assert any(key in pagination for key in ['total', 'total_count', 'page', 'pages', 'current_page', 'has_next'])
-            
-            # If the API includes total items count
-            if 'total' in pagination:
-                assert pagination['total'] == 15
-            elif 'total_count' in pagination:
-                assert pagination['total_count'] == 15
+            assert 'total' in data['pagination']
+            assert data['pagination']['total'] == 15
 
 def test_clone_template(client, setup_database):
     """Test cloning a template with its questions"""
@@ -241,11 +219,6 @@ def test_clone_template(client, setup_database):
     
     # Verify the clone has all the questions from the original
     response = client.get(f'/api/templates/{cloned_id}')
-    
-    # Skip if details endpoint not implemented
-    if response.status_code == 404:
-        pytest.skip("Template details endpoint not implemented yet")
-        
     data = json.loads(response.data)
     
     assert data['name'] == 'Cloned Template'
@@ -268,11 +241,6 @@ def test_template_analytics(client, setup_database):
     
     # Get analytics (even with no assessments, should return empty stats)
     response = client.get(f'/api/templates/{template_id}/analytics')
-    
-    # Skip if analytics endpoint is not implemented
-    if response.status_code == 404:
-        pytest.skip("Template analytics endpoint not implemented yet")
-        
     data = json.loads(response.data)
     
     assert response.status_code == 200
@@ -281,8 +249,3 @@ def test_template_analytics(client, setup_database):
     
     # API might use either completion_percentage or completion_rate
     assert 'completion_rate' in data or 'completion_percentage' in data
-    # These fields may not be implemented yet or might be optional
-    if 'pass_rate' in data:
-        assert isinstance(data['pass_rate'], (int, float))
-    assert 'average_time_seconds' in data or 'average_completion_time' in data or True
-    assert 'score_distribution' in data or True  # Optional field
