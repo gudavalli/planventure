@@ -12,7 +12,7 @@ const TemplateDetails = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
   const { handleError } = useApiErrorHandler();
-  const [template, setTemplate] = useState(null);
+    const [template, setTemplate] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [questionIds, setQuestionIds] = useState([]);
@@ -81,8 +81,7 @@ const TemplateDetails = () => {
       setIsAddingQuestions(false);
     }
   };
-  
-  // Handle clone template modal
+    // Handle clone template modal
   const openCloneModal = () => {
     if (template) {
       setNewTemplateName(`${template.name} (Copy)`);
@@ -153,7 +152,7 @@ const TemplateDetails = () => {
               Created {new Date(template.created_at).toLocaleDateString()}
             </p>
           </div>
-          <div className="d-flex">
+            <div className="d-flex">
             <Button
               variant="outline-primary"
               className="me-2"
@@ -246,44 +245,42 @@ const TemplateDetails = () => {
               </div>
             )}
           </div>
-        </div>
-      
-        {/* Clone Template Modal */}
-        <Modal show={showCloneModal} onHide={() => setShowCloneModal(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Clone Assessment Template</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <form onSubmit={(e) => { e.preventDefault(); handleCloneTemplate(); }}>
-              <div className="mb-3">
-                <label htmlFor="templateName" className="form-label">Template Name</label>
-                <Input
-                  id="templateName"
-                  type="text"
-                  value={newTemplateName}
-                  onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder="Enter a name for the cloned template"
-                  required
-                />
-              </div>
-            </form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowCloneModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleCloneTemplate}
-              isLoading={isCloning}
-              disabled={isCloning || !newTemplateName.trim()}
-            >
-              Clone Template
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
-    </div>
+        </div>      </div>
+
+      {/* Clone Template Modal */}
+      <Modal show={showCloneModal} onHide={() => setShowCloneModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Clone Assessment Template</Modal.Title>
+        </Modal.Header>
+      <Modal.Body>
+        <form onSubmit={(e) => { e.preventDefault(); handleCloneTemplate(); }}>
+          <div className="mb-3">
+            <label htmlFor="templateName" className="form-label">Template Name</label>
+            <Input
+              id="templateName"
+              type="text"
+              value={newTemplateName}
+              onChange={(e) => setNewTemplateName(e.target.value)}
+              placeholder="Enter a name for the cloned template"
+              required
+            />
+          </div>
+        </form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowCloneModal(false)}>
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleCloneTemplate}
+          isLoading={isCloning}
+          disabled={isCloning || !newTemplateName.trim()}
+        >
+          Clone Template
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 

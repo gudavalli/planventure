@@ -378,18 +378,38 @@ def change_password():
             return jsonify({'error': 'User not found'}), 404
         
         data = request.get_json()
-        if not data or not data.get('current_password') or not data.get('new_password'):
-            return jsonify({'error': 'Current and new password are required'}), 400
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
         
-        if not user.check_password(data['current_password']):
+        if not current_password:
+            return jsonify({'error': 'Current password is required'}), 400
+            
+        if not new_password:
+            return jsonify({'error': 'New password is required'}), 400
+            
+        # Validate new password requirements
+        if len(new_password) < 8:
+            return jsonify({'error': 'New password must be at least 8 characters long'}), 400
+        elif not any(c.isupper() for c in new_password):
+            return jsonify({'error': 'New password must contain at least one uppercase letter'}), 400
+        elif not any(c.islower() for c in new_password):
+            return jsonify({'error': 'New password must contain at least one lowercase letter'}), 400
+        elif not any(c.isdigit() for c in new_password):
+            return jsonify({'error': 'New password must contain at least one number'}), 400
+        
+        if not user.check_password(current_password):
             return jsonify({'error': 'Current password is incorrect'}), 401
         
-        user.set_password(data['new_password'])
+        user.set_password(new_password)
         db.session.commit()
         
         return jsonify({'message': 'Password changed successfully'}), 200
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"Password change error: {str(e)}")
         return jsonify({'error': 'Failed to change password', 'details': str(e)}), 500
 
 @auth_bp.route('/roles', methods=['GET'])
