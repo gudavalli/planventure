@@ -60,19 +60,18 @@ def get_questions():
         if search:
             search_term = f"%{search}%"
             query = query.filter(Question.content.ilike(search_term))
-        
-        # Apply sorting
+          # Apply sorting
         if order == 'desc':
             query = query.order_by(getattr(Question, sort_by).desc())
         else:
             query = query.order_by(getattr(Question, sort_by).asc())
         
-        # For the tests, get all results without pagination
-        questions_list = query.all()
+        # Apply pagination
+        paginated_questions = query.paginate(page=page, per_page=per_page)
         
         # Convert to list of dictionaries for JSON serialization
-        result = []
-        for q in questions_list:
+        questions = []
+        for q in paginated_questions.items:
             question_data = {
                 'id': q.id,
                 'specialization': q.specialization,
@@ -86,9 +85,24 @@ def get_questions():
             if hasattr(q, 'reading_sets') and q.reading_sets:
                 question_data['reading_set_id'] = q.reading_sets[0].id
             
-            result.append(question_data)
+            questions.append(question_data)
         
-        return jsonify(result), 200
+        # Prepare response with pagination metadata
+        response = {
+            'questions': questions,
+            'pagination': {
+                'total_items': paginated_questions.total,
+                'total_pages': paginated_questions.pages,
+                'current_page': page,
+                'per_page': per_page,
+                'has_next': paginated_questions.has_next,
+                'has_prev': paginated_questions.has_prev,
+                'next_page': paginated_questions.next_num if paginated_questions.has_next else None,
+                'prev_page': paginated_questions.prev_num if paginated_questions.has_prev else None
+            }
+        }
+        
+        return jsonify(response), 200
         
     except SQLAlchemyError as e:
         return jsonify({'error': 'Database error', 'details': str(e)}), 500

@@ -472,8 +472,12 @@ def update_user_role(user_id):
 @jwt_required()
 @role_required(UserRole.ADMIN, UserRole.TALENT_LEAD)
 def list_users_by_role():
-    """List users filtered by role. Only admins and talent leads can access this."""
+    """List users filtered by role with pagination. Only admins and talent leads can access this."""
     try:
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        
         role = request.args.get('role')
         if role and not UserRole.has_value(role):
             return jsonify({'error': 'Invalid role'}), 400
@@ -482,10 +486,25 @@ def list_users_by_role():
         if role:
             query = query.filter_by(role=role)
             
-        users = db.session.execute(query).scalars().all()
+        # Convert SQLAlchemy 2.0 select to query for pagination
+        # We need to use the legacy query API for pagination
+        if role:
+            paginated_users = db.session.query(User).filter_by(role=role).paginate(page=page, per_page=per_page)
+        else:
+            paginated_users = db.session.query(User).paginate(page=page, per_page=per_page)
         
         return jsonify({
-            'users': [user.to_dict() for user in users]
+            'users': [user.to_dict() for user in paginated_users.items],
+            'pagination': {
+                'total_items': paginated_users.total,
+                'total_pages': paginated_users.pages,
+                'current_page': paginated_users.page,
+                'per_page': paginated_users.per_page,
+                'has_next': paginated_users.has_next,
+                'has_prev': paginated_users.has_prev,
+                'next_page': paginated_users.next_num if paginated_users.has_next else None,
+                'prev_page': paginated_users.prev_num if paginated_users.has_prev else None
+            }
         }), 200
     except Exception as e:
         return jsonify({
@@ -498,8 +517,12 @@ def list_users_by_role():
 @jwt_required()
 @role_required(UserRole.ADMIN, UserRole.TALENT_LEAD)
 def list_users():
-    """List all users. Admins can see all users, Talent Leads can only see Candidates."""
+    """List all users with pagination. Admins can see all users, Talent Leads can only see Candidates."""
     try:
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        
         current_user_id = get_jwt_identity()
         current_user = db.session.get(User, current_user_id)
         
@@ -507,12 +530,25 @@ def list_users():
             return jsonify({'error': 'User not found'}), 404
             
         if current_user.is_admin():
-            users = db.session.query(User).all()
+            query = db.session.query(User)
         else:  # Talent Lead
-            users = db.session.query(User).filter_by(role=UserRole.CANDIDATE.value).all()
+            query = db.session.query(User).filter_by(role=UserRole.CANDIDATE.value)
             
+        # Apply pagination
+        paginated_users = query.paginate(page=page, per_page=per_page)
+        
         return jsonify({
-            'users': [user.to_dict() for user in users]
+            'users': [user.to_dict() for user in paginated_users.items],
+            'pagination': {
+                'total_items': paginated_users.total,
+                'total_pages': paginated_users.pages,
+                'current_page': paginated_users.page,
+                'per_page': paginated_users.per_page,
+                'has_next': paginated_users.has_next,
+                'has_prev': paginated_users.has_prev,
+                'next_page': paginated_users.next_num if paginated_users.has_next else None,
+                'prev_page': paginated_users.prev_num if paginated_users.has_prev else None
+            }
         }), 200
     except Exception as e:
         return jsonify({'error': 'Failed to list users', 'details': str(e)}), 500

@@ -48,9 +48,10 @@ export const authService = {
     const response = await api.post('/auth/change-password', passwords);
     return response.data;
   },
-
-  getAllUsers: async () => {
-    const response = await api.get('/auth/users');
+  getAllUsers: async (page = 1, perPage = 10) => {
+    const response = await api.get('/auth/users', { 
+      params: { page, per_page: perPage } 
+    });
     return response.data;
   },
 

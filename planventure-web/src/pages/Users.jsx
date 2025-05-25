@@ -12,7 +12,10 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [updatingUserIds, setUpdatingUserIds] = useState(new Set());  const { handleError } = useApiErrorHandler();
+  const [updatingUserIds, setUpdatingUserIds] = useState(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({});
+  const { handleError } = useApiErrorHandler();
 
   const loadRoles = useCallback(async () => {
     try {
@@ -22,18 +25,17 @@ const Users = () => {
       handleError(error);
     }
   }, [handleError]);
-
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (page = 1) => {
     try {
-      const data = await authService.getAllUsers();
+      const data = await authService.getAllUsers(page, 10);
       setUsers(data.users);
+      setPagination(data.pagination);
     } catch (error) {
       handleError(error);
     } finally {
       setIsLoading(false);
     }
   }, [handleError]);
-
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
@@ -41,7 +43,7 @@ const Users = () => {
     const initializeData = async () => {
       try {
         await Promise.all([
-          loadUsers(),
+          loadUsers(currentPage),
           loadRoles()
         ]);
       } catch (error) {
@@ -57,10 +59,13 @@ const Users = () => {
       isMounted = false;
       controller.abort();
     };
-  }, [loadUsers, loadRoles, handleError]);
-  const debouncedLoadUsers = useCallback(() => {
-    debounce(() => loadUsers(), 1000)();
-  }, [loadUsers]);
+  }, [loadUsers, loadRoles, handleError, currentPage]);  const debouncedLoadUsers = useCallback(() => {
+    debounce(() => loadUsers(currentPage), 1000)();
+  }, [loadUsers, currentPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   const handleRoleChange = async (userId, newRole) => {
     setUpdatingUserIds(prev => new Set([...prev, userId]));
@@ -170,10 +175,47 @@ const Users = () => {
                         </Button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  ))}                </tbody>
               </table>
             </div>
+            
+            {/* Pagination */}
+            {pagination && pagination.total_pages > 1 && (
+              <div className="d-flex justify-content-center p-3">
+                <nav aria-label="Users pagination">
+                  <ul className="pagination mb-0">
+                    <li className={`page-item ${!pagination.has_prev ? 'disabled' : ''}`}>
+                      <Button 
+                        className="page-link" 
+                        onClick={() => handlePageChange(pagination.current_page - 1)}
+                        disabled={!pagination.has_prev}
+                      >
+                        Previous
+                      </Button>
+                    </li>
+                    {[...Array(pagination.total_pages).keys()].map(page => (
+                      <li key={page + 1} className={`page-item ${pagination.current_page === page + 1 ? 'active' : ''}`}>
+                        <Button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(page + 1)}
+                        >
+                          {page + 1}
+                        </Button>
+                      </li>
+                    ))}
+                    <li className={`page-item ${!pagination.has_next ? 'disabled' : ''}`}>
+                      <Button 
+                        className="page-link" 
+                        onClick={() => handlePageChange(pagination.current_page + 1)}
+                        disabled={!pagination.has_next}
+                      >
+                        Next
+                      </Button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
           </div>
         </div>
       </main>

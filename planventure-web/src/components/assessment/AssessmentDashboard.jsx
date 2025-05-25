@@ -156,10 +156,9 @@ const AssessmentDashboard = () => {
                 <Link to="/assessments/templates/create" className="btn btn-sm btn-primary mt-2">
                   Create your first template
                 </Link>
-              </div>
-            )}
+              </div>            )}
             
-            {templates.length > 0 && (
+            {templatesPagination && templatesPagination.total_pages > 1 && (
               <div className="d-flex justify-content-center p-3">
                 <nav aria-label="Template pagination">
                   <ul className="pagination mb-0">
@@ -261,10 +260,9 @@ const AssessmentDashboard = () => {
             ) : (
               <div className="text-center p-5">
                 <p className="mb-0">No assessments found</p>
-              </div>
-            )}
+              </div>            )}
             
-            {assessments.length > 0 && (
+            {assessmentsPagination && assessmentsPagination.total_pages > 1 && (
               <div className="d-flex justify-content-center p-3">
                 <nav aria-label="Assessments pagination">
                   <ul className="pagination mb-0">
@@ -352,8 +350,8 @@ const getAssessmentLink = async (assessmentId) => {
           // Fall back to prompting the user to copy manually
           prompt('Copy this assessment link:', fullUrl);
         });
-    }
-  } catch (error) {
+    }  } catch (error) {
+    console.error('Failed to get assessment link:', error);
     toast.error('Failed to get assessment link');
   }
 };
