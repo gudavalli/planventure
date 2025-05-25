@@ -1,0 +1,463 @@
+[
+  {
+    "content": "What should you do when a team member is not contributing effectively?",
+    "correct_answer": "Address the issue directly and offer support",
+    "created_at": "2025-05-24T16:26:02.784484",
+    "id": 34,
+    "options": [
+      "Ignore the issue and do their work yourself",
+      "Report them to management immediately",
+      "Address the issue directly and offer support",
+      "Exclude them from team activities"
+    ],
+    "specialization": "Teamwork",
+    "updated_at": "2025-05-24T16:26:02.784488"
+  },
+  {
+    "content": "What is active listening?",
+    "correct_answer": "Fully concentrating on and understanding what the speaker is saying",
+    "created_at": "2025-05-24T16:26:00.627933",
+    "id": 33,
+    "options": [
+      "Talking more than the other person",
+      "Preparing your response while the other person speaks",
+      "Fully concentrating on and understanding what the speaker is saying",
+      "Taking notes during conversation"
+    ],
+    "specialization": "Communication",
+    "updated_at": "2025-05-24T16:26:00.627937"
+  },
+  {
+    "content": "How do you prioritize tasks when everything seems urgent?",
+    "correct_answer": "Assess impact and deadlines, then prioritize accordingly",
+    "created_at": "2025-05-24T16:25:58.487109",
+    "id": 32,
+    "options": [
+      "Work on the easiest tasks first",
+      "Work on the most recent requests first",
+      "Assess impact and deadlines, then prioritize accordingly",
+      "Ask someone else to decide"
+    ],
+    "specialization": "Soft Skills",
+    "updated_at": "2025-05-24T16:25:58.487114"
+  },
+  {
+    "content": "What is the best approach when you disagree with your manager's decision?",
+    "correct_answer": "Discuss your concerns respectfully and provide alternative suggestions",
+    "created_at": "2025-05-24T16:25:56.345401",
+    "id": 31,
+    "options": [
+      "Ignore the decision and do what you think is right",
+      "Discuss your concerns respectfully and provide alternative suggestions",
+      "Complain to other team members",
+      "Follow the decision without question"
+    ],
+    "specialization": "Soft Skills",
+    "updated_at": "2025-05-24T16:25:56.345406"
+  },
+  {
+    "content": "What does HTTP stand for?",
+    "correct_answer": "HyperText Transfer Protocol",
+    "created_at": "2025-05-24T16:25:54.193753",
+    "id": 30,
+    "options": [
+      "HyperText Transfer Protocol",
+      "HyperText Transmission Protocol",
+      "HyperLink Transfer Protocol",
+      "HyperMedia Transfer Protocol"
+    ],
+    "specialization": "Networking",
+    "updated_at": "2025-05-24T16:25:54.193757"
+  },
+  {
+    "content": "What is a deadlock in operating systems?",
+    "correct_answer": "When two or more processes wait indefinitely for each other",
+    "created_at": "2025-05-24T16:25:52.052868",
+    "id": 29,
+    "options": [
+      "When a program stops responding",
+      "When two or more processes wait indefinitely for each other",
+      "When memory is full",
+      "When CPU usage is 100%"
+    ],
+    "specialization": "Operating Systems",
+    "updated_at": "2025-05-24T16:25:52.052874"
+  },
+  {
+    "content": "Which data structure follows LIFO (Last In, First Out) principle?",
+    "correct_answer": "Stack",
+    "created_at": "2025-05-24T16:25:49.894719",
+    "id": 28,
+    "options": [
+      "Queue",
+      "Stack",
+      "Array",
+      "LinkedList"
+    ],
+    "specialization": "Data Structures",
+    "updated_at": "2025-05-24T16:25:49.894725"
+  },
+  {
+    "content": "What is the time complexity of searching in a balanced binary search tree?",
+    "correct_answer": "O(log n)",
+    "created_at": "2025-05-24T16:25:47.753708",
+    "id": 27,
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n\u00b2)"
+    ],
+    "specialization": "Data Structures",
+    "updated_at": "2025-05-24T16:25:47.753714"
+  },
+  {
+    "content": "Which CSS property controls the spacing between elements?",
+    "correct_answer": "margin",
+    "created_at": "2025-05-24T16:25:45.619059",
+    "id": 26,
+    "options": [
+      "padding",
+      "margin",
+      "border",
+      "spacing"
+    ],
+    "specialization": "CSS",
+    "updated_at": "2025-05-24T16:25:45.619063"
+  },
+  {
+    "content": "Which HTML tag is used to create a hyperlink?",
+    "correct_answer": "<a>",
+    "created_at": "2025-05-24T16:25:43.493704",
+    "id": 25,
+    "options": [
+      "<link>",
+      "<a>",
+      "<href>",
+      "<url>"
+    ],
+    "specialization": "HTML",
+    "updated_at": "2025-05-24T16:25:43.493708"
+  },
+  {
+    "content": "What does the SQL INNER JOIN do?",
+    "correct_answer": "Returns rows that have matching values in both tables",
+    "created_at": "2025-05-24T16:25:41.351414",
+    "id": 24,
+    "options": [
+      "Returns all rows from both tables",
+      "Returns rows that have matching values in both tables",
+      "Returns rows from left table only",
+      "Returns rows from right table only"
+    ],
+    "specialization": "SQL",
+    "updated_at": "2025-05-24T16:25:41.351418"
+  },
+  {
+    "content": "Which SQL clause is used to filter rows?",
+    "correct_answer": "WHERE",
+    "created_at": "2025-05-24T16:25:39.203076",
+    "id": 23,
+    "options": [
+      "SELECT",
+      "FROM",
+      "WHERE",
+      "ORDER BY"
+    ],
+    "specialization": "SQL",
+    "updated_at": "2025-05-24T16:25:39.203082"
+  },
+  {
+    "content": "Which collection allows duplicate elements in Java?",
+    "correct_answer": "List",
+    "created_at": "2025-05-24T16:25:37.061586",
+    "id": 22,
+    "options": [
+      "Set",
+      "List",
+      "Map",
+      "Queue"
+    ],
+    "specialization": "Java",
+    "updated_at": "2025-05-24T16:25:37.061592"
+  },
+  {
+    "content": "What is the correct way to declare a constant in Java?",
+    "correct_answer": "final int x = 5;",
+    "created_at": "2025-05-24T16:25:34.919363",
+    "id": 21,
+    "options": [
+      "const int x = 5;",
+      "final int x = 5;",
+      "static int x = 5;",
+      "readonly int x = 5;"
+    ],
+    "specialization": "Java",
+    "updated_at": "2025-05-24T16:25:34.919368"
+  },
+  {
+    "content": "Which of the following is used to handle exceptions in Python?",
+    "correct_answer": "try-except",
+    "created_at": "2025-05-24T16:25:32.794743",
+    "id": 20,
+    "options": [
+      "try-catch",
+      "try-except",
+      "catch-throw",
+      "handle-error"
+    ],
+    "specialization": "Python",
+    "updated_at": "2025-05-24T16:25:32.794747"
+  },
+  {
+    "content": "What is the output of: print(list(range(5)))?",
+    "correct_answer": "[0, 1, 2, 3, 4]",
+    "created_at": "2025-05-24T16:25:30.659666",
+    "id": 19,
+    "options": [
+      "[1, 2, 3, 4, 5]",
+      "[0, 1, 2, 3, 4]",
+      "[0, 1, 2, 3, 4, 5]",
+      "Error"
+    ],
+    "specialization": "Python",
+    "updated_at": "2025-05-24T16:25:30.659671"
+  },
+  {
+    "content": "Type this technical text: 'Database normalization is the process of structuring a relational database to reduce data redundancy and improve data integrity. It involves organizing data into tables and establishing relationships between them.'",
+    "correct_answer": null,
+    "created_at": "2025-05-24T16:25:28.527677",
+    "id": 18,
+    "options": null,
+    "specialization": "typing",
+    "updated_at": "2025-05-24T16:25:28.527684"
+  },
+  {
+    "content": "Type this business paragraph: 'In today's competitive market, companies must adapt quickly to changing customer demands. Effective communication, innovative solutions, and exceptional customer service are key factors that determine business success.'",
+    "correct_answer": null,
+    "created_at": "2025-05-24T16:25:26.390760",
+    "id": 17,
+    "options": null,
+    "specialization": "typing",
+    "updated_at": "2025-05-24T16:25:26.390764"
+  },
+  {
+    "content": "Type the following text as quickly and accurately as possible: 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet and is commonly used for typing practice.'",
+    "correct_answer": null,
+    "created_at": "2025-05-24T16:25:24.244222",
+    "id": 16,
+    "options": null,
+    "specialization": "typing",
+    "updated_at": "2025-05-24T16:25:24.244228"
+  },
+  {
+    "content": "Based on the following passage:\n\n\n        Remote work has become increasingly common, especially after the global pandemic. \n        While it offers flexibility and eliminates commuting time, it also presents unique \n        challenges. Communication can become more difficult, team collaboration may suffer, \n        and employees might feel isolated. Successful remote work requires clear communication \n        protocols, regular check-ins, and the right technology tools. Companies that adapt \n        well to remote work often see increased employee satisfaction and reduced overhead costs.\n        \n\nQuestion: According to the passage, what do companies need for successful remote work?",
+    "correct_answer": "Clear communication protocols and right technology",
+    "created_at": "2025-05-24T16:25:21.880156",
+    "id": 15,
+    "options": [
+      "Larger office spaces",
+      "More employees",
+      "Clear communication protocols and right technology",
+      "Higher salaries"
+    ],
+    "specialization": "reading_comprehension",
+    "updated_at": "2025-05-24T16:25:21.880161"
+  },
+  {
+    "content": "Based on the following passage:\n\n\n        Remote work has become increasingly common, especially after the global pandemic. \n        While it offers flexibility and eliminates commuting time, it also presents unique \n        challenges. Communication can become more difficult, team collaboration may suffer, \n        and employees might feel isolated. Successful remote work requires clear communication \n        protocols, regular check-ins, and the right technology tools. Companies that adapt \n        well to remote work often see increased employee satisfaction and reduced overhead costs.\n        \n\nQuestion: What is mentioned as a benefit of remote work?",
+    "correct_answer": "Eliminates commuting time",
+    "created_at": "2025-05-24T16:25:19.743813",
+    "id": 14,
+    "options": [
+      "Better team collaboration",
+      "Eliminates commuting time",
+      "Improved face-to-face communication",
+      "Guaranteed salary increase"
+    ],
+    "specialization": "reading_comprehension",
+    "updated_at": "2025-05-24T16:25:19.743852"
+  },
+  {
+    "content": "Based on the following passage:\n\n\n        Artificial Intelligence (AI) has revolutionized many industries, from healthcare to finance. \n        Machine learning algorithms can now process vast amounts of data and identify patterns that \n        humans might miss. However, AI systems are only as good as the data they are trained on. \n        Biased data can lead to biased AI decisions, which is why data quality and diversity are \n        crucial for developing fair and effective AI systems. Companies must also consider the \n        ethical implications of AI deployment, ensuring that these powerful tools are used \n        responsibly and transparently.\n        \n\nQuestion: What does the passage suggest about AI's capabilities compared to humans?",
+    "correct_answer": "AI can identify patterns humans might miss",
+    "created_at": "2025-05-24T16:25:17.410355",
+    "id": 13,
+    "options": [
+      "AI is always better than humans",
+      "AI can identify patterns humans might miss",
+      "AI cannot process large amounts of data",
+      "AI is only useful in healthcare"
+    ],
+    "specialization": "reading_comprehension",
+    "updated_at": "2025-05-24T16:25:17.410373"
+  },
+  {
+    "content": "Based on the following passage:\n\n\n        Artificial Intelligence (AI) has revolutionized many industries, from healthcare to finance. \n        Machine learning algorithms can now process vast amounts of data and identify patterns that \n        humans might miss. However, AI systems are only as good as the data they are trained on. \n        Biased data can lead to biased AI decisions, which is why data quality and diversity are \n        crucial for developing fair and effective AI systems. Companies must also consider the \n        ethical implications of AI deployment, ensuring that these powerful tools are used \n        responsibly and transparently.\n        \n\nQuestion: According to the passage, what is a key factor in developing fair AI systems?",
+    "correct_answer": "Data quality and diversity",
+    "created_at": "2025-05-24T16:25:15.261209",
+    "id": 12,
+    "options": [
+      "Processing speed",
+      "Data quality and diversity",
+      "Algorithm complexity",
+      "Cost effectiveness"
+    ],
+    "specialization": "reading_comprehension",
+    "updated_at": "2025-05-24T16:25:15.261213"
+  },
+  {
+    "content": "Which word does NOT belong with the others?",
+    "correct_answer": "Potato",
+    "created_at": "2025-05-24T16:25:13.109701",
+    "id": 11,
+    "options": [
+      "Apple",
+      "Orange",
+      "Banana",
+      "Potato"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:25:13.109704"
+  },
+  {
+    "content": "Choose the word that best completes the analogy: Book is to Library as Painting is to ___",
+    "correct_answer": "Museum",
+    "created_at": "2025-05-24T16:25:10.961913",
+    "id": 10,
+    "options": [
+      "Museum",
+      "Artist",
+      "Canvas",
+      "Frame"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:25:10.961917"
+  },
+  {
+    "content": "If Train A travels 60 mph and Train B travels 80 mph, and they start 140 miles apart traveling toward each other, when will they meet?",
+    "correct_answer": "1 hour",
+    "created_at": "2025-05-24T16:25:08.813463",
+    "id": 9,
+    "options": [
+      "1 hour",
+      "1.5 hours",
+      "2 hours",
+      "2.5 hours"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:25:08.813468"
+  },
+  {
+    "content": "What is 15% of 240?",
+    "correct_answer": "36",
+    "created_at": "2025-05-24T16:25:06.684183",
+    "id": 8,
+    "options": [
+      "32",
+      "36",
+      "40",
+      "44"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:25:06.684186"
+  },
+  {
+    "content": "If a product costs $80 after a 20% discount, what was the original price?",
+    "correct_answer": "$100",
+    "created_at": "2025-05-24T16:25:04.527811",
+    "id": 7,
+    "options": [
+      "$96",
+      "$100",
+      "$104",
+      "$120"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:25:04.527815"
+  },
+  {
+    "content": "A clock shows 3:15. What is the angle between the hour and minute hands?",
+    "correct_answer": "7.5 degrees",
+    "created_at": "2025-05-24T16:25:02.377479",
+    "id": 6,
+    "options": [
+      "0 degrees",
+      "7.5 degrees",
+      "15 degrees",
+      "22.5 degrees"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:25:02.377482"
+  },
+  {
+    "content": "If all Bloops are Razzles and all Razzles are Lazzles, then all Bloops are definitely Lazzles. This statement is:",
+    "correct_answer": "True",
+    "created_at": "2025-05-24T16:25:00.219829",
+    "id": 5,
+    "options": [
+      "True",
+      "False",
+      "Cannot be determined",
+      "Sometimes true"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:25:00.219834"
+  },
+  {
+    "content": "What comes next in the sequence: 2, 6, 12, 20, 30, ?",
+    "correct_answer": "42",
+    "created_at": "2025-05-24T16:24:58.071247",
+    "id": 4,
+    "options": [
+      "40",
+      "42",
+      "44",
+      "46"
+    ],
+    "specialization": "aptitude",
+    "updated_at": "2025-05-24T16:24:58.071254"
+  },
+  {
+    "content": "Which CSS property is used to make text bold?",
+    "correct_answer": "font-weight",
+    "created_at": "2025-05-24T15:30:22.650104",
+    "id": 3,
+    "options": [
+      "font-weight",
+      "font-style",
+      "text-decoration",
+      "font-size"
+    ],
+    "specialization": "CSS",
+    "updated_at": "2025-05-24T15:30:22.650108"
+  },
+  {
+    "content": "Which hook is used for managing state in functional components?",
+    "correct_answer": "useState",
+    "created_at": "2025-05-24T15:27:45.741779",
+    "id": 2,
+    "options": [
+      "useState",
+      "useEffect",
+      "useContext",
+      "useReducer"
+    ],
+    "specialization": "React",
+    "updated_at": "2025-05-24T15:27:45.741784"
+  },
+  {
+    "content": "What is the difference between let and var in JavaScript?",
+    "correct_answer": "Block scope vs Function scope",
+    "created_at": "2025-05-24T15:24:57.287035",
+    "id": 1,
+    "options": [
+      "Block scope vs Function scope",
+      "No difference",
+      "Let is older than var",
+      "Var supports block scope"
+    ],
+    "specialization": "JavaScript",
+    "updated_at": "2025-05-24T15:24:57.287040"
+  }
+]

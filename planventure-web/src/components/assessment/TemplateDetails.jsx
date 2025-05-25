@@ -120,7 +120,7 @@ const TemplateDetails = () => {
     })
     .then(response => {
       toast.success(`Assessment created for ${email}`);
-      navigate(`/assessments/assignments`);
+      navigate(`/assessments`);
     })
     .catch(error => {
       handleError(error);

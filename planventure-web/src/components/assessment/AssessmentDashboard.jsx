@@ -61,20 +61,19 @@ const AssessmentDashboard = () => {
   const handleAssessmentsPageChange = (newPage) => {
     setAssessmentsPage(newPage);
   };
-
   const createAssessmentForUser = async (templateId) => {
     const email = prompt("Enter candidate's email address:");
     if (!email) return;
     
     try {
-      const response = await assessmentService.createAssessment({
+      await assessmentService.createAssessment({
         template_id: templateId,
         user_email: email
       });
       toast.success(`Assessment created for ${email}`);
       loadAssessments(1);
-    } catch (error) {
-      handleError(error);
+    } catch (err) {
+      handleError(err);
     }
   };
 
@@ -89,13 +88,12 @@ const AssessmentDashboard = () => {
             <i className="bi bi-plus-circle me-2"></i>Create Template
           </Link>
         </div>
-        
-        {/* Templates Section */}
+          {/* Templates Section */}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h5 className="mb-0">Assessment Templates</h5>
             <div>
-              <Link to="/assessments/templates" className="btn btn-sm btn-outline-primary">
+              <Link to="/assessments/questions" className="btn btn-sm btn-outline-primary">
                 View All
               </Link>
             </div>
@@ -198,17 +196,9 @@ const AssessmentDashboard = () => {
               </div>
             )}
           </div>
-        </div>
-        
-        {/* Assessments Section */}
-        <div className="card shadow-sm">
-          <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        </div>        {/* Assessments Section */}        <div className="card shadow-sm">
+          <div className="card-header bg-white py-3">
             <h5 className="mb-0">Recent Assessments</h5>
-            <div>
-              <Link to="/assessments/assignments" className="btn btn-sm btn-outline-primary">
-                View All
-              </Link>
-            </div>
           </div>
           
           <div className="card-body p-0">

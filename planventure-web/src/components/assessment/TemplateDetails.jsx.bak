@@ -112,14 +112,13 @@ const TemplateDetails = () => {
   const createAssessmentForUser = () => {
     const email = prompt("Enter candidate's email address:");
     if (!email) return;
-    
-    assessmentService.createAssessment({
+      assessmentService.createAssessment({
       template_id: templateId,
       user_email: email
     })
     .then(response => {
       toast.success(`Assessment created for ${email}`);
-      navigate(`/assessments/assignments`);
+      navigate(`/assessments`);
     })
     .catch(error => {
       handleError(error);
