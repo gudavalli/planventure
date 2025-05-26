@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import Navigation from '../Navigation';
 import { assessmentService } from '../../services/api';
 import { useApiErrorHandler } from '../../hooks/useApiErrorHandler';
@@ -7,6 +7,7 @@ import { useApiErrorHandler } from '../../hooks/useApiErrorHandler';
 const ViewQuestionDetails = () => {
   const { questionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { handleError } = useApiErrorHandler();
   const [question, setQuestion] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,11 +90,12 @@ const ViewQuestionDetails = () => {
       <div className="container py-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h1 className="h3 mb-0">Question Details</h1>
-          <div>
-            <Link to="/assessments/questions" className="btn btn-outline-secondary me-2">
+          <div>            <Link 
+              to={location.state?.from || "/assessments/questions"}
+              className="btn btn-outline-secondary me-2"
+            >
               <i className="bi bi-arrow-left me-1"></i>Back
-            </Link>
-            <Link to={`/assessments/questions/${questionId}/edit`} className="btn btn-primary">
+            </Link><Link to={`/assessments/questions/${questionId}/edit?returnTo=${encodeURIComponent(location.pathname)}`} className="btn btn-primary">
               <i className="bi bi-pencil me-1"></i>Edit Question
             </Link>
           </div>

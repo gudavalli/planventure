@@ -214,12 +214,21 @@ const TemplateDetails = () => {
                             {question.options ? question.options.length : '-'}
                           </td>
                           <td>
-                            <Link 
-                              to={`/assessments/questions/${question.id}`}
-                              className="btn btn-sm btn-outline-secondary"
-                            >
-                              View
-                            </Link>
+                            <div className="btn-group" role="group">
+                              <Link 
+                                to={`/assessments/questions/${question.id}`}
+                                state={{ from: `/assessments/templates/${templateId}` }}
+                                className="btn btn-sm btn-outline-secondary"
+                              >
+                                View
+                              </Link>
+                              <Link 
+                                to={`/assessments/questions/${question.id}/edit?returnTo=${encodeURIComponent(`/assessments/templates/${templateId}`)}`}
+                                className="btn btn-sm btn-outline-primary"
+                              >
+                                Edit
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))}

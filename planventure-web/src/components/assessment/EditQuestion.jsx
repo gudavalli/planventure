@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { assessmentService } from '../../services/api';
 import { useApiErrorHandler } from '../../hooks/useApiErrorHandler';
 import Button from '../Button';
@@ -10,7 +10,12 @@ import toast from 'react-hot-toast';
 const EditQuestion = () => {
   const { questionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { handleError } = useApiErrorHandler();
+  
+  // Extract the returnTo path from URL search params if it exists
+  const searchParams = new URLSearchParams(location.search);
+  const returnTo = searchParams.get('returnTo') || '/assessments/questions';
   
   const [question, setQuestion] = useState(null);
   const [formData, setFormData] = useState({
@@ -77,17 +82,15 @@ const EditQuestion = () => {
           options: data.options || [],
           correct_answer: correctAnswerIndex,
           explanation: data.explanation || '',
-        });
-      } catch (error) {
+        });      } catch (error) {
         handleError(error);
-        navigate('/assessments/questions');
+        navigate(returnTo);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchQuestion();
-  }, [questionId, navigate, handleError]);
+      fetchQuestion();
+  }, [questionId, navigate, handleError, returnTo]);
   
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -177,7 +180,7 @@ const EditQuestion = () => {
       const response = await assessmentService.updateQuestion(questionId, submissionData);
       console.log('Update response:', response);
       toast.success('Question updated successfully');
-      navigate('/assessments/questions');
+      navigate(returnTo);
     } catch (error) {
       console.error('Error updating question:', error);
       handleError(error);
@@ -336,11 +339,10 @@ const EditQuestion = () => {
                 </div>
               </div>
               
-              <div className="d-flex justify-content-end gap-2">
-                <Button
+              <div className="d-flex justify-content-end gap-2">                <Button
                   type="button"
                   className="btn btn-outline-secondary"
-                  onClick={() => navigate('/assessments/questions')}
+                  onClick={() => navigate(returnTo)}
                 >
                   Cancel
                 </Button>
