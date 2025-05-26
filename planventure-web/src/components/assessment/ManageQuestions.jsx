@@ -123,8 +123,8 @@ const ManageQuestions = () => {
                 <table className="table table-hover mb-0">                  <thead>
                     <tr>
                       <th style={{ width: '45%' }}>Content</th>
-                      <th>Question Type</th>
-                      <th>Subject Specialization</th>
+                      <th>Type</th>
+                      <th>Subject</th>
                       <th>Options</th>
                       <th>Actions</th>
                     </tr>
@@ -264,18 +264,18 @@ const ManageQuestions = () => {
 
 // Helper function to determine the actual question type based on question structure
 const getQuestionType = (question) => {
-  // First check if specialization field contains known type values
-  if (['aptitude', 'reading_comprehension', 'typing'].includes(question.specialization)) {
+  // If specialization field contains known type values, use them
+  if (['reading_comprehension', 'typing'].includes(question.specialization)) {
     return question.specialization;
   }
   
-  // For other specializations, determine type based on structure
+  // For all other specializations (including 'aptitude' and subject names), determine type based on structure
   if (question.options && question.options.length > 0) {
     // Check if it's reading comprehension by looking for long content or reading set
     if (question.reading_set || question.content.includes('\n\n') || question.content.length > 300) {
       return 'reading_comprehension';
     }
-    return 'aptitude'; // Multiple choice
+    return 'aptitude'; // Multiple choice question with options
   }
   
   // Default to typing for text-only questions without options
@@ -284,14 +284,24 @@ const getQuestionType = (question) => {
 
 // Helper function to get the subject specialization
 const getQuestionSpecialization = (question) => {
-  // If specialization is a question type, we don't have subject specialization
-  if (['aptitude', 'reading_comprehension', 'typing'].includes(question.specialization)) {
-    // For 'aptitude' specialization, it's a generic aptitude question without specific subject
-    return question.specialization === 'aptitude' ? 'General Aptitude' : null;
+  const questionType = getQuestionType(question);
+  
+  // Only aptitude questions have subject specializations
+  if (questionType !== 'aptitude') {
+    return null;
   }
   
-  // Otherwise, the specialization field contains the subject domain
-  // These are aptitude questions with subject specializations
+  // If specialization is just 'aptitude', it's a general aptitude question
+  if (question.specialization === 'aptitude') {
+    return 'General Aptitude';
+  }
+  
+  // If specialization contains a specific question type, it's general aptitude
+  if (['reading_comprehension', 'typing'].includes(question.specialization)) {
+    return 'General Aptitude';
+  }
+  
+  // Otherwise, the specialization field contains the subject domain (JavaScript, React, CSS, etc.)
   return question.specialization;
 };
 

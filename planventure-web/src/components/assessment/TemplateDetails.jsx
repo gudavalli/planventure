@@ -16,10 +16,25 @@ const TemplateDetails = () => {
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  
   // Clone modal state
   const [showCloneModal, setShowCloneModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [isCloning, setIsCloning] = useState(false);
+  
+  // Calculate pagination
+  const totalQuestions = questions.length;
+  const totalPages = Math.ceil(totalQuestions / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentQuestions = questions.slice(startIndex, endIndex);
+  
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
   
   useEffect(() => {
     const fetchTemplateDetails = async () => {
@@ -31,6 +46,9 @@ const TemplateDetails = () => {
         if (templateData.questions) {
           setQuestions(templateData.questions);
         }
+        
+        // Reset to first page when template changes
+        setCurrentPage(1);
       } catch (error) {
         handleError(error);
         navigate('/assessments');
@@ -150,7 +168,7 @@ const TemplateDetails = () => {
         {/* Questions Section */}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Questions ({questions.length})</h5>
+            <h5 className="mb-0">Questions ({totalQuestions})</h5>
             <div>
               <Link to="/assessments/questions/create" className="btn btn-sm btn-primary">
                 <i className="bi bi-plus-circle me-1"></i> Add New Question
@@ -159,44 +177,135 @@ const TemplateDetails = () => {
           </div>
           
           <div className="card-body p-0">
-            {questions.length > 0 ? (
-              <div className="table-responsive">
-                <table className="table table-hover mb-0">
-                  <thead>
-                    <tr>
-                      <th>Content</th>
-                      <th>Type</th>
-                      <th>Options</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {questions.map(question => (
-                      <tr key={question.id}>
-                        <td className="text-truncate" style={{ maxWidth: '300px' }}>
-                          {question.content}
-                        </td>
-                        <td>
-                          <span className={`badge ${getQuestionTypeBadge(question.specialization)}`}>
-                            {formatQuestionType(question.specialization)}
-                          </span>
-                        </td>
-                        <td>
-                          {question.options ? question.options.length : '-'}
-                        </td>
-                        <td>
-                          <Link 
-                            to={`/assessments/questions/${question.id}`}
-                            className="btn btn-sm btn-outline-secondary"
-                          >
-                            View
-                          </Link>
-                        </td>
+            {totalQuestions > 0 ? (
+              <>
+                <div className="table-responsive">
+                  <table className="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>Content</th>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Options</th>
+                        <th>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {currentQuestions.map(question => (
+                        <tr key={question.id}>
+                          <td className="text-truncate" style={{ maxWidth: '300px' }}>
+                            {question.content}
+                          </td>
+                          <td>
+                            <span className={`badge ${getQuestionTypeBadge(getQuestionType(question))}`}>
+                              {formatQuestionType(getQuestionType(question))}
+                            </span>
+                          </td>
+                          <td>
+                            {getQuestionSpecialization(question) ? (
+                              <span className="badge bg-secondary">
+                                {getQuestionSpecialization(question)}
+                              </span>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td>
+                            {question.options ? question.options.length : '-'}
+                          </td>
+                          <td>
+                            <Link 
+                              to={`/assessments/questions/${question.id}`}
+                              className="btn btn-sm btn-outline-secondary"
+                            >
+                              View
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="d-flex justify-content-between align-items-center p-3">
+                    <div className="text-muted small">
+                      Showing {startIndex + 1} to {Math.min(endIndex, totalQuestions)} of {totalQuestions} questions
+                    </div>
+                    <nav aria-label="Template questions pagination">
+                      <ul className="pagination mb-0">
+                        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                          <Button 
+                            className="page-link" 
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </Button>
+                        </li>
+                        {(() => {
+                          const pages = [];
+                          
+                          // Show first page
+                          if (currentPage > 3) {
+                            pages.push(1);
+                            if (currentPage > 4) {
+                              pages.push('...');
+                            }
+                          }
+                          
+                          // Show pages around current page
+                          const start = Math.max(1, currentPage - 2);
+                          const end = Math.min(totalPages, currentPage + 2);
+                          
+                          for (let i = start; i <= end; i++) {
+                            pages.push(i);
+                          }
+                          
+                          // Show last page
+                          if (currentPage < totalPages - 2) {
+                            if (currentPage < totalPages - 3) {
+                              pages.push('...');
+                            }
+                            pages.push(totalPages);
+                          }
+                          
+                          return pages.map((pageNum, index) => {
+                            if (pageNum === '...') {
+                              return (
+                                <li key={`ellipsis-${index}`} className="page-item disabled">
+                                  <span className="page-link">...</span>
+                                </li>
+                              );
+                            }
+                            
+                            return (
+                              <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                                <Button 
+                                  className="page-link" 
+                                  onClick={() => handlePageChange(pageNum)}
+                                >
+                                  {pageNum}
+                                </Button>
+                              </li>
+                            );
+                          });
+                        })()}
+                        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                          <Button 
+                            className="page-link" 
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                          >
+                            Next
+                          </Button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center p-5">
                 <p className="mb-3">No questions in this template yet</p>
@@ -247,8 +356,51 @@ const TemplateDetails = () => {
   );
 };
 
-const formatQuestionType = (specialization) => {
-  switch (specialization) {
+// Helper function to determine the actual question type based on question structure
+const getQuestionType = (question) => {
+  // If specialization field contains known type values, use them
+  if (['reading_comprehension', 'typing'].includes(question.specialization)) {
+    return question.specialization;
+  }
+  
+  // For all other specializations (including 'aptitude' and subject names), determine type based on structure
+  if (question.options && question.options.length > 0) {
+    // Check if it's reading comprehension by looking for long content or reading set
+    if (question.reading_set || question.content.includes('\n\n') || question.content.length > 300) {
+      return 'reading_comprehension';
+    }
+    return 'aptitude'; // Multiple choice question with options
+  }
+  
+  // Default to typing for text-only questions without options
+  return 'typing';
+};
+
+// Helper function to get the subject specialization
+const getQuestionSpecialization = (question) => {
+  const questionType = getQuestionType(question);
+  
+  // Only aptitude questions have subject specializations
+  if (questionType !== 'aptitude') {
+    return null;
+  }
+  
+  // If specialization is just 'aptitude', it's a general aptitude question
+  if (question.specialization === 'aptitude') {
+    return 'General Aptitude';
+  }
+  
+  // If specialization contains a specific question type, it's general aptitude
+  if (['reading_comprehension', 'typing'].includes(question.specialization)) {
+    return 'General Aptitude';
+  }
+  
+  // Otherwise, the specialization field contains the subject domain (JavaScript, React, CSS, etc.)
+  return question.specialization;
+};
+
+const formatQuestionType = (type) => {
+  switch (type) {
     case 'aptitude':
       return 'Multiple Choice';
     case 'reading_comprehension':
@@ -256,12 +408,12 @@ const formatQuestionType = (specialization) => {
     case 'typing':
       return 'Typing';
     default:
-      return specialization;
+      return type || 'Unknown';
   }
 };
 
-const getQuestionTypeBadge = (specialization) => {
-  switch (specialization) {
+const getQuestionTypeBadge = (type) => {
+  switch (type) {
     case 'aptitude':
       return 'bg-primary';
     case 'reading_comprehension':
