@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../Navigation';
 import Button from '../Button';
@@ -10,11 +10,12 @@ const ManageQuestions = () => {
   const { handleError } = useApiErrorHandler();
   
   const [questions, setQuestions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [isLoading, setIsLoading] = useState(true);  const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({});    const fetchQuestions = useCallback(async () => {
+  const [pagination, setPagination] = useState({});
+  
+  const fetchQuestions = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await assessmentService.getQuestions(page, 10, filter, search);
