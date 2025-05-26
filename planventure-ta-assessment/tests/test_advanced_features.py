@@ -29,9 +29,7 @@ def test_edit_question(client, setup_database):
                           data=json.dumps(edit_data),
                           content_type='application/json')
 
-    assert response.status_code == 200
-
-    # Verify the question was updated
+    assert response.status_code == 200    # Verify the question was updated
     response = client.get(f'/api/questions/{question_id}')
     data = json.loads(response.data)
 

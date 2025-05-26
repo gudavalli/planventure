@@ -8,50 +8,25 @@ from datetime import datetime, UTC
 
 questions = Blueprint('questions', __name__)
 
-def convert_numeric_fields(data):
-    """Helper function to convert numeric string values to integers"""
-    converted_data = data.copy()
-    
-    # Convert correct_answer to int if it's a numeric string
-    if 'correct_answer' in converted_data and converted_data['correct_answer'] is not None:
-        correct_answer = converted_data['correct_answer']
-        if isinstance(correct_answer, str) and correct_answer.isdigit():
-            converted_data['correct_answer'] = int(correct_answer)
-        elif isinstance(correct_answer, (int, float)):
-            converted_data['correct_answer'] = int(correct_answer)
-    
-    # Convert time_limit to int if it's a numeric string
-    if 'time_limit' in converted_data and converted_data['time_limit'] is not None:
-        time_limit = converted_data['time_limit']
-        if isinstance(time_limit, str) and time_limit.isdigit():
-            converted_data['time_limit'] = int(time_limit)
-        elif isinstance(time_limit, (int, float)):
-            converted_data['time_limit'] = int(time_limit)
-    
-    return converted_data
-
 @questions.route('/questions', methods=['POST'])
 def create_question():
     try:
         data = request.get_json()
-          # Validate required fields
+        
+        # Validate required fields
         required_fields = ['specialization', 'content']
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             return jsonify({
                 'error': 'Missing required fields',
                 'missing_fields': missing_fields
-            }), 400        # Convert numeric fields from strings to integers
-        data = convert_numeric_fields(data)
-        
+            }), 400
+
         question = Question(
             specialization=data['specialization'],
             content=data['content'],
             options=data.get('options'),
-            correct_answer=data.get('correct_answer'),
-            explanation=data.get('explanation'),
-            difficulty=data.get('difficulty', 'medium'),
-            time_limit=data.get('time_limit', 60)
+            correct_answer=data.get('correct_answer')
         )
         
         # If it's a reading comprehension question, link it to the reading set
@@ -68,11 +43,11 @@ def create_question():
 
 @questions.route('/questions', methods=['GET'])
 def get_questions():
-    try:        # Get query parameters
+    try:
+        # Get query parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
         specialization = request.args.get('specialization')
-        question_type = request.args.get('type')  # For filtering by question type (aptitude, reading_comprehension, typing)
         search = request.args.get('search')
         sort_by = request.args.get('sort_by', 'created_at')  # Default sort by creation date
         order = request.args.get('order', 'desc')  # Default order descending
@@ -84,19 +59,6 @@ def get_questions():
         # Apply filters
         if specialization:
             query = query.filter_by(specialization=specialization)
-        elif question_type and question_type != 'all':
-            # Filter by question type - this requires custom logic
-            if question_type == 'aptitude':
-                # Aptitude questions have options and specialization that's not 'typing' or 'reading_comprehension'
-                query = query.filter(
-                    Question.options.isnot(None),
-                    ~Question.specialization.in_(['typing', 'reading_comprehension'])
-                )
-            elif question_type == 'typing':
-                query = query.filter_by(specialization='typing')
-            elif question_type == 'reading_comprehension':
-                query = query.filter_by(specialization='reading_comprehension')
-        
         if search:
             search_term = f"%{search}%"
             query = query.filter(Question.content.ilike(search_term))
@@ -173,9 +135,6 @@ def update_question(question_id):
         
         question = Question.query.get_or_404(question_id)
         
-        # Convert numeric fields from strings to integers
-        data = convert_numeric_fields(data)
-        
         if 'specialization' in data:
             question.specialization = data['specialization']
         if 'content' in data:
@@ -196,12 +155,12 @@ def update_question(question_id):
         
         # Explicitly update the updated_at timestamp
         question.updated_at = datetime.now(UTC)
+        
         # Mark the object as modified to ensure SQLAlchemy detects the changes
         from sqlalchemy import inspect
         inspect(question).modified = True
         
         db.session.commit()
-        
         return jsonify({'message': 'Question updated successfully'}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
@@ -213,6 +172,17 @@ def update_question(question_id):
         if '404' in str(e):
             return jsonify({'error': 'Question not found'}), 404
         return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500
+
+@questions.route('/questions/<int:question_id>', methods=['DELETE'])
+def delete_question(question_id):
+    try:
+        question = Question.query.get_or_404(question_id)
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({'message': 'Question deleted successfully'}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'error': 'Database error', 'details': str(e)}), 500
 
 @questions.route('/questions/<int:question_id>', methods=['GET'])
 def get_question(question_id):
@@ -248,17 +218,6 @@ def get_question(question_id):
         if '404' in str(e):
             return jsonify({'error': 'Question not found'}), 404
         return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500
-
-@questions.route('/questions/<int:question_id>', methods=['DELETE'])
-def delete_question(question_id):
-    try:
-        question = Question.query.get_or_404(question_id)
-        db.session.delete(question)
-        db.session.commit()
-        return jsonify({'message': 'Question deleted successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'error': 'Database error', 'details': str(e)}), 500
 
 @questions.route('/reading-sets', methods=['POST'])
 def create_reading_set():

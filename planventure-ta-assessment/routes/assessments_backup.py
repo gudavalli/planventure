@@ -5,7 +5,6 @@ from models.question import Question
 from models.database import db
 from sqlalchemy.exc import SQLAlchemyError
 from difflib import SequenceMatcher
-from werkzeug.exceptions import NotFound
 
 assessments = Blueprint('assessments', __name__)
 
@@ -216,15 +215,15 @@ def list_templates():
         per_page = request.args.get('per_page', 10, type=int)
         name_search = request.args.get('name', '')
         search = request.args.get('search', '')
-          # Build query
-        query = AssessmentTemplate.query
         
+        # Build query
+        query = AssessmentTemplate.query            
         # Apply search filters
         if search:
             query = query.filter(AssessmentTemplate.name.like(f'%{search}%'))
         elif name_search:  # For backward compatibility
             query = query.filter(AssessmentTemplate.name.like(f'%{name_search}%'))
-          # Apply pagination
+              # Apply pagination
         paginated_templates = query.paginate(page=page, per_page=per_page, error_out=False)
         
         # Prepare response
@@ -234,8 +233,7 @@ def list_templates():
             question_count = template.questions.count()
             
             templates.append({
-                'id': template.id,
-                'name': template.name,
+                'id': template.id,                'name': template.name,
                 'description': template.description,
                 'percentage': template.percentage,
                 'time_limit': template.time_limit,
@@ -244,8 +242,7 @@ def list_templates():
                 'created_at': template.created_at.isoformat(),
                 'updated_at': template.updated_at.isoformat()
             })
-        
-        # Pagination metadata
+          # Pagination metadata
         pagination = {
             'page': paginated_templates.page,
             'per_page': paginated_templates.per_page,
@@ -255,8 +252,7 @@ def list_templates():
             'has_prev': paginated_templates.has_prev,
             'current_page': paginated_templates.page
         }
-        
-        response = {
+          response = {
             'templates': templates,
             'pagination': pagination
         }
@@ -273,17 +269,19 @@ def list_templates():
 def get_template_details(template_id):
     try:
         template = AssessmentTemplate.query.get_or_404(template_id)
-          # Get question count and questions
+        
+        # Get question count and questions
         questions = []
         for question in template.questions:
             questions.append({
                 'id': question.id,
-                'specialization': question.specialization,
-                'content': question.content,
+                'text': question.text,
+                'type': question.type,
+                'difficulty': question.difficulty,
+                'category': question.category,
                 'options': question.options,
                 'correct_answer': question.correct_answer,
-                'created_at': question.created_at.isoformat(),
-                'updated_at': question.updated_at.isoformat()
+                'explanation': question.explanation
             })
         
         response = {
@@ -301,16 +299,6 @@ def get_template_details(template_id):
         
         return jsonify(response), 200
         
-    except NotFound:
-        return jsonify({
-            'error': 'Template not found',
-            'message': f'Template with ID {template_id} does not exist'
-        }), 404
-    except SQLAlchemyError as e:
-        return jsonify({
-            'error': 'Database error',
-            'details': str(e)
-        }), 500
     except Exception as e:
         return jsonify({
             'error': 'Error fetching template details',
@@ -818,61 +806,3 @@ def get_template_analytics(template_id):
         return jsonify(analytics), 200
     except SQLAlchemyError as e:
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
-
-
-    except SQLAlchemyError as e:
-        return jsonify({'error': 'Database error', 'details': str(e)}), 500
-
-
-        
-    except SQLAlchemyError as e:
-        return jsonify({'error': 'Database error', 'details': str(e)}), 500
-
-@assessments.route('/templates/<int:template_id>', methods=['PUT'])
-def update_template(template_id):
-    """Update a template"""
-    try:
-        # Check for valid JSON first
-        try:
-            data = request.get_json()
-            if data is None:
-                return jsonify({'error': 'Invalid JSON format'}), 400
-        except Exception:
-            return jsonify({'error': 'Invalid JSON format'}), 400
-        
-        template = AssessmentTemplate.query.get_or_404(template_id)
-        
-        # Update fields if provided
-        if 'name' in data:
-            template.name = data['name']
-        if 'description' in data:
-            template.description = data['description']
-        if 'time_limit' in data:
-            template.time_limit = data['time_limit']
-        if 'percentage' in data:
-            template.percentage = data['percentage']
-        
-        # Update the updated_at timestamp
-        template.updated_at = datetime.now(UTC)
-        
-        # Commit changes
-        db.session.commit()
-        
-        # Refresh to get latest data
-        db.session.refresh(template)
-        
-        return jsonify({
-            'message': 'Template updated successfully',
-            'id': template.id,
-            'name': template.name,
-            'description': template.description,
-            'time_limit': template.time_limit,
-            'percentage': template.percentage,
-            'updated_at': template.updated_at.isoformat()
-        }), 200
-        
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'error': 'Database error', 'details': str(e)}), 500
-    except Exception as e:
-        return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500

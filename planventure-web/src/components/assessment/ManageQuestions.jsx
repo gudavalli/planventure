@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../Navigation';
 import Button from '../Button';
 import Input from '../Input';
 import { assessmentService } from '../../services/api';
 import { useApiErrorHandler } from '../../hooks/useApiErrorHandler';
-import toast from 'react-hot-toast';
 
 const ManageQuestions = () => {
   const { handleError } = useApiErrorHandler();
@@ -15,35 +14,50 @@ const ManageQuestions = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({});
-  
-  useEffect(() => {
-    fetchQuestions();
-  }, [page, filter]);
-  
-  const fetchQuestions = async () => {
+  const [pagination, setPagination] = useState({});    const fetchQuestions = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Assuming there's an API endpoint for questions
       const response = await assessmentService.getQuestions(page, 10, filter, search);
-      setQuestions(response.questions);
-      setPagination(response.pagination);
+      
+      // Handle the response format with pagination data
+      if (response && typeof response === 'object' && response.questions) {
+        // Full format with pagination
+        setQuestions(response.questions);
+        setPagination(response.pagination || {});
+      } else if (Array.isArray(response)) {
+        // Fallback for direct array response
+        setQuestions(response);
+        setPagination({
+          page: page,
+          total_pages: 1,
+          has_prev: false,
+          has_next: false
+        });
+      } else {
+        // Unexpected format
+        setQuestions([]);
+        setPagination({});
+      }
     } catch (error) {
       handleError(error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, filter, search, handleError]);
+  
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
   
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPage(1); // Reset to first page
     fetchQuestions();
   };
-  
-  const handleFilterChange = (e) => {
+    const handleFilterChange = (e) => {
     setFilter(e.target.value);
     setPage(1); // Reset to first page
+    // The fetchQuestions will be called automatically due to useEffect dependency
   };
   
   const handlePageChange = (newPage) => {
@@ -82,16 +96,14 @@ const ManageQuestions = () => {
                 </form>
               </div>
               
-              <div className="col-md-6 col-lg-3 ms-auto">
-                <select
+              <div className="col-md-6 col-lg-3 ms-auto">                <select
                   className="form-select"
                   value={filter}
                   onChange={handleFilterChange}
-                >
-                  <option value="all">All Types</option>
+                >                  <option value="all">All Types</option>
                   <option value="aptitude">Multiple Choice</option>
                   <option value="reading_comprehension">Reading Comprehension</option>
-                  <option value="typing">Typing</option>
+                  <option value="typing">Typing Test</option>
                 </select>
               </div>
             </div>
@@ -108,25 +120,32 @@ const ManageQuestions = () => {
               </div>
             ) : questions.length > 0 ? (
               <div className="table-responsive">
-                <table className="table table-hover mb-0">
-                  <thead>
+                <table className="table table-hover mb-0">                  <thead>
                     <tr>
-                      <th style={{ width: '50%' }}>Content</th>
-                      <th>Type</th>
+                      <th style={{ width: '45%' }}>Content</th>
+                      <th>Question Type</th>
+                      <th>Subject Specialization</th>
                       <th>Options</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {questions.map(question => (
-                      <tr key={question.id}>
-                        <td className="text-truncate" style={{ maxWidth: '300px' }}>
+                    {questions.map(question => (                      <tr key={question.id}>
+                        <td className="text-truncate" style={{ maxWidth: '250px' }}>
                           {question.content}
+                        </td>                        <td>
+                          <span className={`badge ${getQuestionTypeBadge(getQuestionType(question))}`}>
+                            {formatQuestionType(getQuestionType(question))}
+                          </span>
                         </td>
                         <td>
-                          <span className={`badge ${getQuestionTypeBadge(question.specialization)}`}>
-                            {formatQuestionType(question.specialization)}
-                          </span>
+                          {getQuestionSpecialization(question) ? (
+                            <span className="badge bg-secondary">
+                              {getQuestionSpecialization(question)}
+                            </span>
+                          ) : (
+                            <span className="text-muted">-</span>
+                          )}
                         </td>
                         <td>
                           {question.options ? question.options.length : '-'}
@@ -156,36 +175,77 @@ const ManageQuestions = () => {
               <div className="text-center p-5">
                 <p>No questions found</p>
               </div>
-            )}
-            
-            {/* Pagination */}
+            )}            {/* Pagination */}
             {pagination && pagination.total_pages > 1 && (
-              <div className="d-flex justify-content-center p-3">
+              <div className="d-flex justify-content-between align-items-center p-3">
+                <div className="text-muted small">
+                  Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to {Math.min(pagination.current_page * pagination.per_page, pagination.total_items)} of {pagination.total_items} questions
+                </div>
                 <nav aria-label="Question pagination">
                   <ul className="pagination mb-0">
                     <li className={`page-item ${!pagination.has_prev ? 'disabled' : ''}`}>
                       <Button 
                         className="page-link" 
-                        onClick={() => handlePageChange(pagination.page - 1)}
+                        onClick={() => handlePageChange(pagination.current_page - 1)}
                         disabled={!pagination.has_prev}
                       >
                         Previous
                       </Button>
                     </li>
-                    {[...Array(pagination.total_pages).keys()].map(pageNum => (
-                      <li key={pageNum + 1} className={`page-item ${pagination.page === pageNum + 1 ? 'active' : ''}`}>
-                        <Button 
-                          className="page-link" 
-                          onClick={() => handlePageChange(pageNum + 1)}
-                        >
-                          {pageNum + 1}
-                        </Button>
-                      </li>
-                    ))}
+                    {(() => {
+                      const currentPage = pagination.current_page;
+                      const totalPages = pagination.total_pages;
+                      const pages = [];
+                      
+                      // Show first page
+                      if (currentPage > 3) {
+                        pages.push(1);
+                        if (currentPage > 4) {
+                          pages.push('...');
+                        }
+                      }
+                      
+                      // Show pages around current page
+                      const start = Math.max(1, currentPage - 2);
+                      const end = Math.min(totalPages, currentPage + 2);
+                      
+                      for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                      }
+                      
+                      // Show last page
+                      if (currentPage < totalPages - 2) {
+                        if (currentPage < totalPages - 3) {
+                          pages.push('...');
+                        }
+                        pages.push(totalPages);
+                      }
+                      
+                      return pages.map((pageNum, index) => {
+                        if (pageNum === '...') {
+                          return (
+                            <li key={`ellipsis-${index}`} className="page-item disabled">
+                              <span className="page-link">...</span>
+                            </li>
+                          );
+                        }
+                        
+                        return (
+                          <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                            <Button 
+                              className="page-link" 
+                              onClick={() => handlePageChange(pageNum)}
+                            >
+                              {pageNum}
+                            </Button>
+                          </li>
+                        );
+                      });
+                    })()}
                     <li className={`page-item ${!pagination.has_next ? 'disabled' : ''}`}>
                       <Button 
                         className="page-link" 
-                        onClick={() => handlePageChange(pagination.page + 1)}
+                        onClick={() => handlePageChange(pagination.current_page + 1)}
                         disabled={!pagination.has_next}
                       >
                         Next
@@ -202,8 +262,41 @@ const ManageQuestions = () => {
   );
 };
 
-const formatQuestionType = (specialization) => {
-  switch (specialization) {
+// Helper function to determine the actual question type based on question structure
+const getQuestionType = (question) => {
+  // First check if specialization field contains known type values
+  if (['aptitude', 'reading_comprehension', 'typing'].includes(question.specialization)) {
+    return question.specialization;
+  }
+  
+  // For other specializations, determine type based on structure
+  if (question.options && question.options.length > 0) {
+    // Check if it's reading comprehension by looking for long content or reading set
+    if (question.reading_set || question.content.includes('\n\n') || question.content.length > 300) {
+      return 'reading_comprehension';
+    }
+    return 'aptitude'; // Multiple choice
+  }
+  
+  // Default to typing for text-only questions without options
+  return 'typing';
+};
+
+// Helper function to get the subject specialization
+const getQuestionSpecialization = (question) => {
+  // If specialization is a question type, we don't have subject specialization
+  if (['aptitude', 'reading_comprehension', 'typing'].includes(question.specialization)) {
+    // For 'aptitude' specialization, it's a generic aptitude question without specific subject
+    return question.specialization === 'aptitude' ? 'General Aptitude' : null;
+  }
+  
+  // Otherwise, the specialization field contains the subject domain
+  // These are aptitude questions with subject specializations
+  return question.specialization;
+};
+
+const formatQuestionType = (type) => {
+  switch (type) {
     case 'aptitude':
       return 'Multiple Choice';
     case 'reading_comprehension':
@@ -211,12 +304,12 @@ const formatQuestionType = (specialization) => {
     case 'typing':
       return 'Typing';
     default:
-      return specialization;
+      return type || 'Unknown';
   }
 };
 
-const getQuestionTypeBadge = (specialization) => {
-  switch (specialization) {
+const getQuestionTypeBadge = (type) => {
+  switch (type) {
     case 'aptitude':
       return 'bg-primary';
     case 'reading_comprehension':

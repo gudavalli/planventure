@@ -91,8 +91,7 @@ const EditQuestion = () => {
       correct_answer: newCorrectAnswer
     }));
   };
-  
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
@@ -119,12 +118,15 @@ const EditQuestion = () => {
       }
     }
     
+    console.log('Submitting form data:', formData);
     setIsSaving(true);
     try {
-      await assessmentService.updateQuestion(questionId, formData);
+      const response = await assessmentService.updateQuestion(questionId, formData);
+      console.log('Update response:', response);
       toast.success('Question updated successfully');
       navigate('/assessments/questions');
     } catch (error) {
+      console.error('Error updating question:', error);
       handleError(error);
     } finally {
       setIsSaving(false);

@@ -172,10 +172,10 @@ const Users = () => {
                           onClick={() => handleResetPassword(user.id)}
                         >
                           Reset Password
-                        </Button>
-                      </td>
+                        </Button>                      </td>
                     </tr>
-                  ))}                </tbody>
+                  ))}
+                </tbody>
               </table>
             </div>
             

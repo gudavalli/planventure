@@ -23,6 +23,7 @@ import AssessmentTemplateDetails from './pages/AssessmentTemplateDetails'
 import AssessmentTemplateAnalytics from './pages/AssessmentTemplateAnalytics'
 import AssessmentQuestions from './pages/AssessmentQuestions'
 import CreateAssessmentQuestion from './pages/CreateAssessmentQuestion'
+import ViewAssessmentQuestion from './pages/ViewAssessmentQuestion'
 import EditAssessmentQuestion from './pages/EditAssessmentQuestion'
 import AssessmentTake from './pages/AssessmentTake'
 import AssessmentResult from './pages/AssessmentResult'
@@ -126,6 +127,14 @@ function App() {
               element={
                 <TalentLeadRoute>
                   <CreateAssessmentQuestion />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/assessments/questions/:questionId"
+              element={
+                <TalentLeadRoute>
+                  <ViewAssessmentQuestion />
                 </TalentLeadRoute>
               }
             />

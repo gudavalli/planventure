@@ -19,6 +19,9 @@ class Question(Base):
     content = db.Column(db.Text, nullable=False)
     options = db.Column(db.JSON)  # For aptitude: list of options, For reading_comprehension: might be null
     correct_answer = db.Column(db.Text)  # For aptitude: correct option, For typing: null
+    explanation = db.Column(db.Text, nullable=True)  # Explanation for correct answer (optional)
+    difficulty = db.Column(db.String(10), default='medium')  # easy, medium, hard
+    time_limit = db.Column(db.Integer, default=60)  # Time limit in seconds
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     

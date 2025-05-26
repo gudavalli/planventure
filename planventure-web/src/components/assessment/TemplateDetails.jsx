@@ -15,8 +15,6 @@ const TemplateDetails = () => {
   const [template, setTemplate] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [questionIds, setQuestionIds] = useState([]);
-  const [isAddingQuestions, setIsAddingQuestions] = useState(false);
   
   // Clone modal state
   const [showCloneModal, setShowCloneModal] = useState(false);
@@ -43,44 +41,6 @@ const TemplateDetails = () => {
     
     fetchTemplateDetails();
   }, [templateId, navigate, handleError]);
-  
-  const handleCheckboxChange = (questionId) => {
-    setQuestionIds(prev => {
-      if (prev.includes(questionId)) {
-        return prev.filter(id => id !== questionId);
-      } else {
-        return [...prev, questionId];
-      }
-    });
-  };
-  
-  const handleAddQuestions = async () => {
-    if (questionIds.length === 0) {
-      toast.error('Please select at least one question');
-      return;
-    }
-    
-    setIsAddingQuestions(true);
-    try {
-      await assessmentService.addQuestionsToTemplate(templateId, questionIds);
-      toast.success('Questions added to template successfully');
-      
-      // Refresh template details
-      const templateData = await assessmentService.getTemplateDetails(templateId);
-      setTemplate(templateData);
-      
-      if (templateData.questions) {
-        setQuestions(templateData.questions);
-      }
-      
-      // Clear selection
-      setQuestionIds([]);
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setIsAddingQuestions(false);
-    }
-  };
   
   // Handle clone template modal
   const openCloneModal = () => {
@@ -118,7 +78,7 @@ const TemplateDetails = () => {
       template_id: templateId,
       user_email: email
     })
-    .then(response => {
+    .then(() => {
       toast.success(`Assessment created for ${email}`);
       navigate(`/assessments`);
     })
@@ -240,7 +200,7 @@ const TemplateDetails = () => {
             ) : (
               <div className="text-center p-5">
                 <p className="mb-3">No questions in this template yet</p>
-                <Link to="/assessments/questions/manage" className="btn btn-primary">
+                <Link to="/assessments/questions" className="btn btn-primary">
                   Add Questions
                 </Link>
               </div>
