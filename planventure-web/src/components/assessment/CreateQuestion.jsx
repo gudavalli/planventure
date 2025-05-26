@@ -58,15 +58,26 @@ const CreateQuestion = () => {
       });
     }
   };
-  
-  const handleOptionChange = (index, value) => {
+    const handleOptionChange = (index, value) => {
     const newOptions = [...formData.options];
     newOptions[index] = value;
-    setFormData(prev => ({ ...prev, options: newOptions }));
+    
+    // If this is the correct answer and it's being emptied, clear the correct_answer
+    let updatedFormData = { ...formData, options: newOptions };
+    if (formData.correct_answer === index && !value.trim()) {
+      updatedFormData.correct_answer = null;
+    }
+    
+    setFormData(updatedFormData);
     
     // Clear options error
     if (errors.options) {
       setErrors(prev => ({ ...prev, options: '' }));
+    }
+    
+    // Clear correct_answer error if we had one
+    if (errors.correct_answer) {
+      setErrors(prev => ({ ...prev, correct_answer: '' }));
     }
   };
   
@@ -109,16 +120,22 @@ const CreateQuestion = () => {
     if (!formData.content.trim()) {
       newErrors.content = 'Question content is required';
     }
-    
-    if (questionType === 'aptitude' || questionType === 'reading_comprehension') {
+      if (questionType === 'aptitude' || questionType === 'reading_comprehension') {
       // Check all options have values
       const emptyOptions = formData.options.findIndex(opt => !opt.trim());
       if (emptyOptions !== -1) {
         newErrors.options = `Option ${emptyOptions + 1} cannot be empty`;
       }
-        // Make sure a correct answer is selected
+      
+      // Make sure a correct answer is selected
       if (formData.correct_answer === null) {
         newErrors.correct_answer = 'Please select the correct answer';
+      }
+      // Make sure the selected correct answer is not empty
+      else if (formData.correct_answer !== null && 
+              (!formData.options[formData.correct_answer] || 
+               !formData.options[formData.correct_answer].trim())) {
+        newErrors.correct_answer = 'The selected correct answer cannot be empty';
       }
     }
     
@@ -255,15 +272,14 @@ const CreateQuestion = () => {
                   {(questionType === 'aptitude' || questionType === 'reading_comprehension') && (
                     <div className="mb-4">
                       <label className="form-label">Answer Options</label>
-                      
-                      {formData.options.map((option, index) => (                        <div className="input-group mb-2" key={index}>
+                        {formData.options.map((option, index) => (                        <div className="input-group mb-2" key={index}>
                           <div className="input-group-text">
                             <input
                               type="radio"
                               name="correct_answer"
                               checked={formData.correct_answer === index}
                               onChange={() => setFormData(prev => ({ ...prev, correct_answer: index }))}
-                              disabled={!option.trim()}
+                              // Removed the disabled condition to always allow selection
                             />
                           </div>
                           <input
@@ -282,15 +298,15 @@ const CreateQuestion = () => {
                           </button>
                         </div>
                       ))}
-                      
-                      {errors.options && (
+                        {errors.options && (
                         <div className="text-danger mb-2 small">
                           {errors.options}
                         </div>
                       )}
                       
                       {errors.correct_answer && (
-                        <div className="text-danger mb-2 small">
+                        <div className="alert alert-danger py-2 mt-2 mb-2">
+                          <i className="bi bi-exclamation-triangle-fill me-2"></i>
                           {errors.correct_answer}
                         </div>
                       )}
