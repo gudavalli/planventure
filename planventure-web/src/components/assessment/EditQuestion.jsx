@@ -24,32 +24,59 @@ const EditQuestion = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
-  useEffect(() => {
+    useEffect(() => {
     const fetchQuestion = async () => {
-      setIsLoading(true);      try {
+      setIsLoading(true);      
+      try {
         const data = await assessmentService.getQuestionDetails(questionId);
+        console.log('Question data from API:', data);
         setQuestion(data);
         
+        // Determine if this is a multiple choice question
+        // If it has options array, treat it as a multiple choice question
+        const isMultipleChoice = Array.isArray(data.options) && data.options.length > 0;
+        
+        // For multiple choice questions, ensure specialization is set to 'aptitude'
+        let specialization = data.specialization || '';
+        if (isMultipleChoice && specialization !== 'aptitude') {
+          console.log('Question has options but specialization is not aptitude. Setting to aptitude.');
+          specialization = 'aptitude';
+        }
+        
         // Convert correct_answer to index if it's option text
-        let correctAnswerIndex = data.correct_answer;
-        if (data.specialization === 'aptitude' && data.options && data.correct_answer !== null) {
-          // If correct_answer is option text, find its index
+        let correctAnswerIndex = null;
+        if (isMultipleChoice && data.correct_answer !== null) {
           if (typeof data.correct_answer === 'string') {
+            // Find the matching option text
             correctAnswerIndex = data.options.findIndex(option => option === data.correct_answer);
-            if (correctAnswerIndex === -1) correctAnswerIndex = null;
+            console.log('Converted correct_answer from text to index:', data.correct_answer, '->', correctAnswerIndex);
+          } else if (typeof data.correct_answer === 'number' && data.correct_answer >= 0 && data.correct_answer < data.options.length) {
+            // If it's already an index, use it directly
+            correctAnswerIndex = data.correct_answer;
+            console.log('Using correct_answer as index:', correctAnswerIndex);
           }
         }
         
+        // Use empty array if options is null or undefined
+        const options = isMultipleChoice ? data.options : [];
+        
         setFormData({
           content: data.content || '',
-          specialization: data.specialization || '',
-          options: data.options || [],
+          specialization: specialization,
+          options: options,
           correct_answer: correctAnswerIndex,
           explanation: data.explanation || '',
           difficulty: data.difficulty || 'medium',
           time_limit: data.time_limit || 60,
           reading_set_id: data.reading_set_id || null
+        });
+        
+        console.log('Form data set:', {
+          content: data.content || '',
+          specialization: specialization,
+          options: data.options || [],
+          correct_answer: correctAnswerIndex,
+          explanation: data.explanation || '',
         });
       } catch (error) {
         handleError(error);
@@ -99,9 +126,7 @@ const EditQuestion = () => {
       options: prev.options.filter((_, i) => i !== index),
       correct_answer: newCorrectAnswer
     }));
-  };
-
-  const handleSubmit = async (e) => {
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
@@ -110,7 +135,11 @@ const EditQuestion = () => {
       return;
     }
     
-    if (formData.specialization === 'aptitude') {
+    // Check if this is a multiple choice question
+    const isMultipleChoice = formData.specialization === 'aptitude' || 
+      (Array.isArray(formData.options) && formData.options.length > 0);
+    
+    if (isMultipleChoice) {
       if (formData.options.length < 2) {
         toast.error('Multiple choice questions require at least 2 options');
         return;
@@ -127,15 +156,22 @@ const EditQuestion = () => {
         return;
       }
     }
-      console.log('Submitting form data:', formData);
+    
+    console.log('Submitting form data:', formData);
     setIsSaving(true);
     try {
       // Prepare the data for submission
       let submissionData = { ...formData };
       
       // For multiple choice questions, convert the correct_answer index to the actual option text
-      if (formData.specialization === 'aptitude' && formData.correct_answer !== null) {
-        submissionData.correct_answer = formData.options[formData.correct_answer];
+      if (isMultipleChoice && formData.correct_answer !== null) {
+        if (Array.isArray(formData.options) && 
+            formData.correct_answer >= 0 && 
+            formData.correct_answer < formData.options.length) {
+          submissionData.correct_answer = formData.options[formData.correct_answer];
+          console.log('Converting correct answer index to text:', formData.correct_answer, 
+                      '->', submissionData.correct_answer);
+        }
       }
       
       const response = await assessmentService.updateQuestion(questionId, submissionData);
@@ -190,10 +226,8 @@ const EditQuestion = () => {
                   <option value="aptitude">Multiple Choice</option>
                   <option value="reading_comprehension">Reading Comprehension</option>
                   <option value="typing">Typing Test</option>
-                </select>
-              </div>
-              
-              <div className="mb-3">
+                </select>              </div>
+                <div className="mb-3">
                 <label htmlFor="content" className="form-label">Question Content</label>
                 <textarea
                   id="content"
@@ -211,7 +245,8 @@ const EditQuestion = () => {
                 </div>
               </div>
               
-              {formData.specialization === 'aptitude' && (
+              {/* Show options section for aptitude or any question with options */}
+              {(formData.specialization === 'aptitude' || (Array.isArray(formData.options) && formData.options.length > 0)) && (
                 <>
                   <div className="mb-3">
                     <label className="form-label">Options</label>
