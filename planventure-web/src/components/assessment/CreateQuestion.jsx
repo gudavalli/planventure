@@ -12,12 +12,11 @@ const CreateQuestion = () => {
   const { handleError } = useApiErrorHandler();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [questionType, setQuestionType] = useState('aptitude');
-  const [formData, setFormData] = useState({
+  const [questionType, setQuestionType] = useState('aptitude');  const [formData, setFormData] = useState({
     specialization: 'aptitude',
     content: '',
     options: ['', '', '', ''],
-    correct_answer: '',
+    correct_answer: null,
   });
   const [errors, setErrors] = useState({});
   const [readingParagraph, setReadingParagraph] = useState('');
@@ -35,21 +34,20 @@ const CreateQuestion = () => {
   const handleTypeChange = (e) => {
     const type = e.target.value;
     setQuestionType(type);
-    
-    // Reset form when changing question type
+      // Reset form when changing question type
     if (type === 'aptitude') {
       setFormData({
         specialization: 'aptitude',
         content: formData.content,
         options: ['', '', '', ''],
-        correct_answer: '',
+        correct_answer: null,
       });
     } else if (type === 'reading_comprehension') {
       setFormData({
         specialization: 'reading_comprehension',
         content: formData.content,
         options: ['', '', '', ''],
-        correct_answer: '',
+        correct_answer: null,
       });
     } else if (type === 'typing') {
       setFormData({
@@ -78,8 +76,7 @@ const CreateQuestion = () => {
       options: [...prev.options, '']
     }));
   };
-  
-  const removeOption = (index) => {
+    const removeOption = (index) => {
     // Don't allow removing if only 2 options remain
     if (formData.options.length <= 2) {
       toast.error('Question must have at least 2 options');
@@ -89,10 +86,14 @@ const CreateQuestion = () => {
     const newOptions = [...formData.options];
     newOptions.splice(index, 1);
     
-    // If the correct answer was the removed option, reset it
+    // Update correct_answer if needed
     let newCorrectAnswer = formData.correct_answer;
-    if (formData.correct_answer === formData.options[index]) {
-      newCorrectAnswer = '';
+    if (formData.correct_answer === index) {
+      // If the removed option was selected as correct, reset
+      newCorrectAnswer = null;
+    } else if (formData.correct_answer !== null && formData.correct_answer > index) {
+      // If a later option was selected, shift the index down
+      newCorrectAnswer = formData.correct_answer - 1;
     }
     
     setFormData(prev => ({
@@ -115,9 +116,8 @@ const CreateQuestion = () => {
       if (emptyOptions !== -1) {
         newErrors.options = `Option ${emptyOptions + 1} cannot be empty`;
       }
-      
-      // Make sure a correct answer is selected
-      if (!formData.correct_answer) {
+        // Make sure a correct answer is selected
+      if (formData.correct_answer === null) {
         newErrors.correct_answer = 'Please select the correct answer';
       }
     }
@@ -138,12 +138,17 @@ const CreateQuestion = () => {
     e.preventDefault();
     
     if (!validate()) return;
-    
-    setIsSubmitting(true);
+      setIsSubmitting(true);
     try {
       let questionData = {
         ...formData
       };
+      
+      // For multiple choice questions, convert the correct_answer index to the actual option text
+      if ((questionType === 'aptitude' || questionType === 'reading_comprehension') && 
+          formData.correct_answer !== null) {
+        questionData.correct_answer = formData.options[formData.correct_answer];
+      }
       
       let response;
       
@@ -251,14 +256,13 @@ const CreateQuestion = () => {
                     <div className="mb-4">
                       <label className="form-label">Answer Options</label>
                       
-                      {formData.options.map((option, index) => (
-                        <div className="input-group mb-2" key={index}>
+                      {formData.options.map((option, index) => (                        <div className="input-group mb-2" key={index}>
                           <div className="input-group-text">
                             <input
                               type="radio"
                               name="correct_answer"
-                              checked={formData.correct_answer === option}
-                              onChange={() => setFormData(prev => ({ ...prev, correct_answer: option }))}
+                              checked={formData.correct_answer === index}
+                              onChange={() => setFormData(prev => ({ ...prev, correct_answer: index }))}
                               disabled={!option.trim()}
                             />
                           </div>

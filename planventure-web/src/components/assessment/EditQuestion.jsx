@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { assessmentService } from '../../services/api';
 import { useApiErrorHandler } from '../../hooks/useApiErrorHandler';
@@ -27,15 +27,25 @@ const EditQuestion = () => {
   
   useEffect(() => {
     const fetchQuestion = async () => {
-      setIsLoading(true);
-      try {
+      setIsLoading(true);      try {
         const data = await assessmentService.getQuestionDetails(questionId);
         setQuestion(data);
+        
+        // Convert correct_answer to index if it's option text
+        let correctAnswerIndex = data.correct_answer;
+        if (data.specialization === 'aptitude' && data.options && data.correct_answer !== null) {
+          // If correct_answer is option text, find its index
+          if (typeof data.correct_answer === 'string') {
+            correctAnswerIndex = data.options.findIndex(option => option === data.correct_answer);
+            if (correctAnswerIndex === -1) correctAnswerIndex = null;
+          }
+        }
+        
         setFormData({
           content: data.content || '',
           specialization: data.specialization || '',
           options: data.options || [],
-          correct_answer: data.correct_answer || null,
+          correct_answer: correctAnswerIndex,
           explanation: data.explanation || '',
           difficulty: data.difficulty || 'medium',
           time_limit: data.time_limit || 60,
@@ -75,8 +85,7 @@ const EditQuestion = () => {
       options: [...prev.options, '']
     }));
   };
-  
-  const handleRemoveOption = (index) => {
+    const handleRemoveOption = (index) => {
     // Update the correct answer index if needed
     let newCorrectAnswer = formData.correct_answer;
     if (formData.correct_answer === index) {
@@ -91,7 +100,8 @@ const EditQuestion = () => {
       correct_answer: newCorrectAnswer
     }));
   };
-    const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
@@ -117,11 +127,18 @@ const EditQuestion = () => {
         return;
       }
     }
-    
-    console.log('Submitting form data:', formData);
+      console.log('Submitting form data:', formData);
     setIsSaving(true);
     try {
-      const response = await assessmentService.updateQuestion(questionId, formData);
+      // Prepare the data for submission
+      let submissionData = { ...formData };
+      
+      // For multiple choice questions, convert the correct_answer index to the actual option text
+      if (formData.specialization === 'aptitude' && formData.correct_answer !== null) {
+        submissionData.correct_answer = formData.options[formData.correct_answer];
+      }
+      
+      const response = await assessmentService.updateQuestion(questionId, submissionData);
       console.log('Update response:', response);
       toast.success('Question updated successfully');
       navigate('/assessments/questions');

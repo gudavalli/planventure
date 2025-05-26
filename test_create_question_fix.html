@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Question Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-case { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .pass { border-color: green; background-color: #f0fff0; }
+        .fail { border-color: red; background-color: #fff0f0; }
+    </style>
+</head>
+<body>
+    <h1>Create Question - Correct Answer Selection Test</h1>
+    
+    <div class="test-case">
+        <h3>Test Steps:</h3>
+        <ol>
+            <li>Navigate to <a href="http://localhost:5173/assessments/questions/create" target="_blank">Create Question</a></li>
+            <li>Select "Multiple Choice" question type</li>
+            <li>Enter a question: "What is the capital of France?"</li>
+            <li>Enter options:
+                <ul>
+                    <li>Option 1: "Berlin"</li>
+                    <li>Option 2: "Paris"</li>
+                    <li>Option 3: "London"</li>
+                    <li>Option 4: "Madrid"</li>
+                </ul>
+            </li>
+            <li>Select the radio button next to "Paris" (Option 2)</li>
+            <li>Now modify "Paris" to "Paris, France" - the radio button should REMAIN SELECTED</li>
+            <li>Add a new option and select it - previous selection should be cleared</li>
+            <li>Remove an option - correct answer selection should adjust appropriately</li>
+        </ol>
+    </div>
+    
+    <div class="test-case">
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li>✅ Radio button stays selected when option text is modified</li>
+            <li>✅ Only one radio button can be selected at a time</li>
+            <li>✅ Validation error shows if no correct answer is selected</li>
+            <li>✅ Correct answer selection adjusts when options are removed</li>
+            <li>✅ Form can be successfully submitted with valid data</li>
+        </ul>
+    </div>
+    
+    <div class="test-case">
+        <h3>Fixed Issues:</h3>
+        <ul>
+            <li>🔧 Changed correct_answer from storing option text to storing option index</li>
+            <li>🔧 Radio buttons now check against index instead of text value</li>
+            <li>🔧 removeOption function properly handles index-based correct answers</li>
+            <li>🔧 Form submission converts index back to option text for API</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Add some basic interaction tracking
+        console.log('Create Question Test Page Loaded');
+        console.log('Navigate to the Create Question page and test the correct answer selection functionality');
+    </script>
+</body>
+</html>
