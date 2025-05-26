@@ -7,6 +7,7 @@ import { assessmentService } from '../../services/api';
 import { useApiErrorHandler } from '../../hooks/useApiErrorHandler';
 import { Modal } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import SelectQuestionsModal from './SelectQuestionsModal';
 
 const TemplateDetails = () => {
   const { templateId } = useParams();
@@ -20,8 +21,9 @@ const TemplateDetails = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   
-  // Clone modal state
+  // Modal states
   const [showCloneModal, setShowCloneModal] = useState(false);
+  const [showAddQuestionsModal, setShowAddQuestionsModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [isCloning, setIsCloning] = useState(false);
   
@@ -170,8 +172,15 @@ const TemplateDetails = () => {
           <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h5 className="mb-0">Questions ({totalQuestions})</h5>
             <div>
-              <Link to="/assessments/questions/create" className="btn btn-sm btn-primary">
-                <i className="bi bi-plus-circle me-1"></i> Add New Question
+              <Button 
+                variant="primary"
+                className="btn-sm me-2"
+                onClick={() => setShowAddQuestionsModal(true)}
+              >
+                <i className="bi bi-plus-circle me-1"></i> Add Questions
+              </Button>
+              <Link to="/assessments/questions/create" className="btn btn-sm btn-outline-primary">
+                <i className="bi bi-plus-circle me-1"></i> Create New Question
               </Link>
             </div>
           </div>
@@ -318,9 +327,12 @@ const TemplateDetails = () => {
             ) : (
               <div className="text-center p-5">
                 <p className="mb-3">No questions in this template yet</p>
-                <Link to="/assessments/questions" className="btn btn-primary">
+                <Button 
+                  variant="primary"
+                  onClick={() => setShowAddQuestionsModal(true)}
+                >
                   Add Questions
-                </Link>
+                </Button>
               </div>
             )}
           </div>
@@ -360,6 +372,31 @@ const TemplateDetails = () => {
             </Button>
           </Modal.Footer>
         </Modal>
+
+        {/* Add Questions Modal */}
+        <SelectQuestionsModal
+          show={showAddQuestionsModal}
+          onHide={() => setShowAddQuestionsModal(false)}
+          templateId={templateId}
+          onQuestionsAdded={() => {
+            // Refresh template details after adding questions
+            const fetchTemplateDetails = async () => {
+              try {
+                const templateData = await assessmentService.getTemplateDetails(templateId);
+                setTemplate(templateData);
+                
+                // If template has questions, fetch them
+                if (templateData.questions) {
+                  setQuestions(templateData.questions);
+                }
+              } catch (error) {
+                handleError(error);
+              }
+            };
+            
+            fetchTemplateDetails();
+          }}
+        />
       </div>
     </div>
   );
