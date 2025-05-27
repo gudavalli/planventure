@@ -63,6 +63,11 @@ export const assessmentService = {  // Question Management - for ADMIN and TALEN
     return response.data;
   },
   
+  removeQuestionFromTemplate: async (templateId, questionId) => {
+    const response = await api.delete(`/templates/${templateId}/questions/${questionId}`);
+    return response.data;
+  },
+  
   cloneTemplate: async (templateId, newName) => {
     const response = await api.post(`/templates/${templateId}/clone`, { name: newName });
     return response.data;

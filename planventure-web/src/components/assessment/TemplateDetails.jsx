@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Navigation from '../Navigation';
 import Button from '../Button';
@@ -26,6 +26,9 @@ const TemplateDetails = () => {
   const [showAddQuestionsModal, setShowAddQuestionsModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [isCloning, setIsCloning] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   
   // Calculate pagination
   const totalQuestions = questions.length;
@@ -105,6 +108,36 @@ const TemplateDetails = () => {
     .catch(error => {
       handleError(error);
     });
+  };
+  
+  const openDeleteConfirmation = (question) => {
+    setQuestionToDelete(question);
+    setShowDeleteConfirmation(true);
+  };
+  
+  const handleDeleteQuestion = async () => {
+    if (!questionToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await assessmentService.removeQuestionFromTemplate(templateId, questionToDelete.id);
+      toast.success('Question removed from template successfully');
+      
+      // Refresh template details
+      const templateData = await assessmentService.getTemplateDetails(templateId);
+      setTemplate(templateData);
+      
+      if (templateData.questions) {
+        setQuestions(templateData.questions);
+      }
+      
+      setShowDeleteConfirmation(false);
+      setQuestionToDelete(null);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
   
   if (isLoading) {
@@ -237,6 +270,13 @@ const TemplateDetails = () => {
                               >
                                 Edit
                               </Link>
+                              <Button 
+                                variant="outline-danger"
+                                className="btn-sm"
+                                onClick={() => openDeleteConfirmation(question)}
+                              >
+                                <i className="bi bi-trash"></i>
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -397,6 +437,41 @@ const TemplateDetails = () => {
             fetchTemplateDetails();
           }}
         />
+
+        {/* Delete Question Confirmation Modal */}
+        <Modal show={showDeleteConfirmation} onHide={() => setShowDeleteConfirmation(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm Removal</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {questionToDelete && (
+              <div>
+                <p>Are you sure you want to remove this question from the template?</p>
+                <div className="alert alert-secondary">
+                  <strong>Question:</strong> {questionToDelete.content.length > 100 
+                    ? `${questionToDelete.content.substring(0, 100)}...` 
+                    : questionToDelete.content}
+                </div>
+                <p className="text-muted mb-0">
+                  <small>Note: This will only remove the question from this template. The question itself will not be deleted.</small>
+                </p>
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowDeleteConfirmation(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteQuestion}
+              isLoading={isDeleting}
+              disabled={isDeleting}
+            >
+              Remove Question
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );

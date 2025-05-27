@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
-import AuthProvider from '../context/AuthContext';
+import AuthTestProvider from '../test-utils/AuthTestProvider';
 import Users from '../pages/Users';
 import { authService } from '../services/api';
 import toast from 'react-hot-toast';
@@ -60,13 +60,12 @@ describe('Users Component', () => {  beforeEach(() => {
     authService.getAllUsers.mockResolvedValue({ users: mockUsers });
     authService.getRoles.mockResolvedValue({ roles: mockRoles });
   });
-  
-  it('renders users table with correct data', async () => {
+    it('renders users table with correct data', async () => {
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <AuthTestProvider>
           <Users />
-        </AuthProvider>
+        </AuthTestProvider>
       </MemoryRouter>
     );
 
@@ -94,8 +93,7 @@ describe('Users Component', () => {  beforeEach(() => {
     const unverifiedBadge = screen.getByText('Unverified');
     expect(verifiedBadges).toHaveLength(2);
     expect(unverifiedBadge).toBeInTheDocument();
-  });
-  it('allows role changes for users', async () => {
+  });  it('allows role changes for users', async () => {
     authService.updateUserRole.mockResolvedValue({
       message: 'User role updated successfully',
       user: { ...mockUsers[2], role: 'TALENT_LEAD' },
@@ -106,9 +104,9 @@ describe('Users Component', () => {  beforeEach(() => {
 
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <AuthTestProvider>
           <Users />
-        </AuthProvider>
+        </AuthTestProvider>
       </MemoryRouter>
     );
 
@@ -139,16 +137,15 @@ describe('Users Component', () => {  beforeEach(() => {
       expect(toast.success).toHaveBeenCalledWith('User role updated successfully');
     });    // Clean up
     confirmSpy.mockRestore();
-  });
-  it('handles errors when loading users', async () => {
+  });  it('handles errors when loading users', async () => {
     // Mock API error
     authService.getAllUsers.mockRejectedValue(new Error('Failed to load users'));
 
     render(
       <MemoryRouter>
-        <AuthProvider>
+        <AuthTestProvider>
           <Users />
-        </AuthProvider>
+        </AuthTestProvider>
       </MemoryRouter>
     );
 
@@ -165,12 +162,11 @@ describe('Users Component', () => {  beforeEach(() => {
     
     // Mock window.confirm to return true
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    
-    render(
+      render(
       <MemoryRouter>
-        <AuthProvider>
+        <AuthTestProvider>
           <Users />
-        </AuthProvider>
+        </AuthTestProvider>
       </MemoryRouter>
     );
     

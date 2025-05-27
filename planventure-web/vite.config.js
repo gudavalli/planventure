@@ -12,8 +12,8 @@ export default defineConfig({
       global: 'globalThis',
     },
   },
-  esbuild: {
-    jsxInject: `import React from 'react'`,
+  define: {
+    global: 'globalThis',
   },
   server: {
     proxy: {

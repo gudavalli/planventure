@@ -1,5 +1,7 @@
 
 
+import React from 'react';
+
 const Button = ({ 
   children, 
   type = 'button', 
@@ -10,13 +12,13 @@ const Button = ({
   ...props 
 }) => {
   const baseClasses = 'btn';
-  
-  const variantClasses = {
+    const variantClasses = {
     primary: 'btn-primary',
     secondary: 'btn-secondary',
     danger: 'btn-danger',
     light: 'btn-light',
     outline: 'btn-outline-primary',
+    'outline-danger': 'btn-outline-danger',
   };
 
   const loadingSpinner = (
