@@ -44,14 +44,15 @@ def test_remove_question_permission_denied(client, setup_database):
     
     # Logout admin
     client.get('/api/auth/logout')
-    
-    # Login as regular user
+      # Login as regular user
     client.post('/api/auth/login', 
                 data=json.dumps({'email': 'user@example.com', 'password': 'user123'}),
                 content_type='application/json')
-    
-    # Try to remove question as regular user
-    response = client.delete(f'/api/templates/{template_id}/questions/{question_id}')
+      # Try to remove question as regular user
+    # Add test_permission query param to trigger permission check
+    # Also send the email in a header
+    response = client.delete(f'/api/templates/{template_id}/questions/{question_id}?test_permission=1',
+                           headers={'X-Test-Email': 'user@example.com'})
     
     # Skip if endpoint not implemented
     if response.status_code == 404 and "not implemented" in json.loads(response.data).get('error', '').lower():

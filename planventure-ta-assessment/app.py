@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from models.database import db
-from routes.assessments_fixed import assessments
+from routes.assessments import assessments
 from routes.questions import questions
 
 def create_app(config=None):

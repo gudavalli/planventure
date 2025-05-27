@@ -23,31 +23,29 @@ def app():
 @pytest.fixture(scope='function')
 def client(app):
     """Create a test client for the app."""
-    app_context = app.app_context()
-    app_context.push()
-    client = app.test_client()
-    db.create_all()
-    yield client
-    db.session.remove()
-    db.drop_all()
-    app_context.pop()
+    with app.app_context():
+        client = app.test_client()
+        db.create_all()
+        yield client
+        db.session.remove()
+        db.drop_all()
 
 @pytest.fixture(scope='function')
 def setup_database(app):
     """Set up a clean database for each test."""
-    app_context = app.app_context()
-    app_context.push()
-    db.create_all()
-    yield db.session
-    db.session.remove()
-    db.drop_all()
-    app_context.pop()
+    with app.app_context():
+        db.create_all()
+        yield db.session
+        db.session.remove()
+        db.drop_all()
 
 def create_test_question(client):
     """Helper function to create a test question"""
+    import time
+    timestamp = int(time.time() * 1000)  # Use millisecond timestamp for uniqueness
     data = {
         'specialization': 'aptitude',
-        'content': 'What is 2+2?',
+        'content': f'What is 2+2? {timestamp}',  # Make content unique
         'options': ['3', '4', '5', '6'],
         'correct_answer': '4'
     }
@@ -58,8 +56,10 @@ def create_test_question(client):
 
 def create_test_template(client):
     """Helper function to create a test template"""
+    import time
+    timestamp = int(time.time() * 1000)  # Use millisecond timestamp for uniqueness
     data = {
-        'name': 'Test Template',
+        'name': f'Test Template {timestamp}',  # Make name unique
         'description': 'Test Description',
         'percentage': 100.0,
         'time_limit': 60,
