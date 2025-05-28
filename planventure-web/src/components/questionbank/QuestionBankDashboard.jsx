@@ -97,9 +97,16 @@ const fetchQuestions = useCallback(async () => {
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);
-
   const handleSearch = (e) => {
     e.preventDefault();
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setSelectedSpecialization('');
+    setSelectedDifficulty('');
+    setSelectedQuestionType('');
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -291,16 +298,19 @@ const fetchQuestions = useCallback(async () => {
                       <option value="reading_comprehension">Reading Comprehension</option>
                       <option value="typing">Typing Test</option>
                     </select>
-                  </div>
-                  <div className="col-md-2">
+                  </div>                  <div className="col-md-2">
                     <label className="form-label">&nbsp;</label>
                     <div className="d-grid">
-                      <Button type="submit" variant="outline-primary">
-                        <i className="bi bi-search me-1"></i>
-                        Filter
+                      <Button 
+                        type="button" 
+                        variant="outline-secondary"
+                        onClick={handleReset}
+                      >
+                        <i className="bi bi-arrow-clockwise me-1"></i>
+                        Reset
                       </Button>
                     </div>
-                  </div>                </form>
+                  </div></form>
                 
                 {/* Filter compatibility message */}
                 {getFilterCompatibilityMessage() && (
