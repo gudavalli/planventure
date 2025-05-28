@@ -28,6 +28,14 @@ import EditAssessmentQuestion from './pages/EditAssessmentQuestion'
 import AssessmentTake from './pages/AssessmentTake'
 import AssessmentResult from './pages/AssessmentResult'
 
+// Question Bank Components
+import {
+  QuestionBankDashboard,
+  QuestionBankQuestionView,
+  QuestionBankCreateQuestion,
+  QuestionBankEditQuestion
+} from './components/questionbank'
+
 import './App.css'
 import './styles/print.css'
 
@@ -151,6 +159,40 @@ function App() {
               element={
                 <TalentLeadRoute>
                   <AssessmentResult />
+                </TalentLeadRoute>
+              }
+            />
+
+            {/* Question Bank routes for talent leads and admins */}
+            <Route
+              path="/question-bank"
+              element={
+                <TalentLeadRoute>
+                  <QuestionBankDashboard />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/question-bank/create"
+              element={
+                <TalentLeadRoute>
+                  <QuestionBankCreateQuestion />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/question-bank/:questionId"
+              element={
+                <TalentLeadRoute>
+                  <QuestionBankQuestionView />
+                </TalentLeadRoute>
+              }
+            />
+            <Route
+              path="/question-bank/:questionId/edit"
+              element={
+                <TalentLeadRoute>
+                  <QuestionBankEditQuestion />
                 </TalentLeadRoute>
               }
             />

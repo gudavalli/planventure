@@ -3,12 +3,22 @@ import { createAxiosInstance } from './axiosConfig';
 const api = createAxiosInstance();
 
 export const assessmentService = {  // Question Management - for ADMIN and TALENT_LEAD
-  getQuestions: async (page = 1, perPage = 10, type = 'all', search = '') => {
+  getQuestions: async (page = 1, perPage = 10, type = 'all', search = '', specialization = '', difficulty = '') => {
     const params = { page, per_page: perPage, search, simple: 'false' };
     
     // Only add type filter if not 'all'
     if (type !== 'all') {
       params.type = type;
+    }
+    
+    // Add specialization filter if provided
+    if (specialization) {
+      params.specialization = specialization;
+    }
+    
+    // Add difficulty filter if provided
+    if (difficulty) {
+      params.difficulty = difficulty;
     }
     
     const response = await api.get('/questions', { params });

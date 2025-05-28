@@ -7,6 +7,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Users', href: '/users', adminOnly: true },
   { name: 'Assessments', href: '/assessments', roles: ['admin', 'talent_lead'] },
+  { name: 'Question Bank', href: '/question-bank', roles: ['admin', 'talent_lead'] },
 ];
 
 const Navigation = () => {
@@ -18,7 +19,7 @@ const Navigation = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container-fluid">
-        <Link className="navbar-brand" to={user?.role === 'admin' ? '/users' : '/dashboard'}>PlanVenture</Link>
+        <Link className="navbar-brand" to="/dashboard">PlanVenture</Link>
         <button 
           className="navbar-toggler" 
           type="button" 

@@ -68,34 +68,52 @@ def create_question():
 
 @questions.route('/questions', methods=['GET'])
 def get_questions():
-    try:        # Get query parameters
+    try:
+        # Get query parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
         specialization = request.args.get('specialization')
+        difficulty = request.args.get('difficulty')  # Add difficulty parameter
         question_type = request.args.get('type')  # For filtering by question type (aptitude, reading_comprehension, typing)
         search = request.args.get('search')
         sort_by = request.args.get('sort_by', 'created_at')  # Default sort by creation date
         order = request.args.get('order', 'desc')  # Default order descending
         simple_format = request.args.get('simple', 'true').lower() == 'true'  # Default to simple format for backward compatibility
-        
-        # Build query
+          # Build query
         query = Question.query
         
         # Apply filters
         if specialization:
             query = query.filter_by(specialization=specialization)
-        elif question_type and question_type != 'all':
+        
+        # Apply question type filter (can work alongside specialization)
+        if question_type and question_type != 'all':
             # Filter by question type - this requires custom logic
             if question_type == 'aptitude':
                 # Aptitude questions have options and specialization that's not 'typing' or 'reading_comprehension'
-                query = query.filter(
-                    Question.options.isnot(None),
-                    ~Question.specialization.in_(['typing', 'reading_comprehension'])
-                )
+                # If specialization is already applied, only filter by options
+                if not specialization:
+                    query = query.filter(
+                        Question.options.isnot(None),
+                        ~Question.specialization.in_(['typing', 'reading_comprehension'])
+                    )
+                else:
+                    # If specialization is set, just ensure it has options for aptitude type
+                    query = query.filter(Question.options.isnot(None))
             elif question_type == 'typing':
-                query = query.filter_by(specialization='typing')
+                # If specialization is not already set, filter by typing specialization
+                if not specialization:
+                    query = query.filter_by(specialization='typing')
+                # If specialization is already set, we let it take precedence
             elif question_type == 'reading_comprehension':
-                query = query.filter_by(specialization='reading_comprehension')
+                # If specialization is not already set, filter by reading_comprehension specialization
+                if not specialization:
+                    query = query.filter_by(specialization='reading_comprehension')
+                # If specialization is already set, we let it take precedence
+        
+        # Apply difficulty filter
+        if difficulty:
+            query = query.filter_by(difficulty=difficulty)
         
         if search:
             search_term = f"%{search}%"
