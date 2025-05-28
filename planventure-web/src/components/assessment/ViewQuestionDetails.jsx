@@ -94,8 +94,7 @@ const ViewQuestionDetails = () => {
               to={location.state?.from || "/assessments/questions"}
               className="btn btn-outline-secondary me-2"
             >
-              <i className="bi bi-arrow-left me-1"></i>Back
-            </Link><Link to={`/assessments/questions/${questionId}/edit?returnTo=${encodeURIComponent(location.pathname)}`} className="btn btn-primary">
+              <i className="bi bi-arrow-left me-1"></i>Back            </Link><Link to={`/assessments/questions/${questionId}/edit?returnTo=${encodeURIComponent(location.state?.from || location.pathname)}`} className="btn btn-primary">
               <i className="bi bi-pencil me-1"></i>Edit Question
             </Link>
           </div>

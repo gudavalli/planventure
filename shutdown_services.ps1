@@ -18,17 +18,17 @@ function Stop-ProcessByPort {
             }
         } | Sort-Object -Unique
         
-        foreach ($pid in $pids) {
-            if ($pid -and $pid -ne "0") {
+        foreach ($procid in $pids) {
+            if ($procid -and $procid -ne "0") {
                 try {
-                    $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                    $process = Get-Process -Id $procid -ErrorAction SilentlyContinue
                     if ($process) {
-                        Write-Host "Stopping $ServiceName (PID: $pid, Process: $($process.ProcessName))" -ForegroundColor Red
-                        Stop-Process -Id $pid -Force
+                        Write-Host "Stopping $ServiceName (PID: $procid, Process: $($process.ProcessName))" -ForegroundColor Red
+                        Stop-Process -Id $procid -Force
                         Write-Host "✅ Stopped $ServiceName" -ForegroundColor Green
                     }
                 } catch {
-                    Write-Host "Could not stop process $pid - it may have already stopped" -ForegroundColor Yellow
+                    Write-Host "Could not stop process $procid - it may have already stopped" -ForegroundColor Yellow
                 }
             }
         }

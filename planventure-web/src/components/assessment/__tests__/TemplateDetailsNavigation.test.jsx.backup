@@ -1,0 +1,181 @@
+import React from 'react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import { vi, describe, it, beforeEach, expect } from 'vitest';
+import toast from 'react-hot-toast';
+import AuthTestProvider from '../../../test-utils/AuthTestProvider';
+import TemplateDetails from '../TemplateDetails';
+import { assessmentService } from '../../../services/api';
+
+// Mock react-router-dom
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useParams: () => ({ templateId: '1' }),
+    useNavigate: () => mockNavigate,
+  };
+});
+
+// Mock react-hot-toast
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+// Mock assessmentService
+vi.mock('../../../services/api', () => ({
+  assessmentService: {
+    getTemplateDetails: vi.fn(),
+    sendAssessment: vi.fn(),
+  },
+}));
+
+// Mock the hooks
+vi.mock('../../../hooks/useApiErrorHandler', () => ({
+  useApiErrorHandler: () => ({
+    handleError: vi.fn(),
+  }),
+}));
+
+describe('TemplateDetails Navigation Fixes', () => {
+  beforeEach(() => {
+    // Reset mocks
+    vi.clearAllMocks();
+    
+    // Setup default mock responses
+    assessmentService.getTemplateDetails.mockResolvedValue({
+      id: 1,
+      name: 'Test Template',
+      description: 'Test Description',
+      time_limit: 60,
+      percentage: 70,
+      questions: [
+        {
+          id: 101,
+          content: 'What is the capital of France?',
+          specialization: 'aptitude',
+          options: ['London', 'Paris', 'Berlin', 'Madrid'],
+        },
+      ],
+    });
+  });
+
+  it('should stay on template details page after sending assessment successfully', async () => {
+    // Mock successful assessment send
+    assessmentService.sendAssessment.mockResolvedValue({ success: true });
+
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <AuthTestProvider>
+            <TemplateDetails />
+          </AuthTestProvider>
+        </BrowserRouter>
+      );
+    });
+
+    // Wait for template details to load
+    await waitFor(() => {
+      expect(screen.getByText('Test Template')).toBeInTheDocument();
+    });
+
+    // Find and click the "Send Assessment" button
+    const sendButton = screen.getByRole('button', { name: /send assessment/i });
+    
+    await act(async () => {
+      fireEvent.click(sendButton);
+    });
+
+    // Modal should appear for email input
+    await waitFor(() => {
+      expect(screen.getByText(/send assessment/i)).toBeInTheDocument();
+    });
+
+    // Find email input and submit
+    const emailInput = screen.getByRole('textbox');
+    const submitButton = screen.getByRole('button', { name: /ok/i });
+
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.click(submitButton);
+    });
+
+    // Wait for API call and success toast
+    await waitFor(() => {
+      expect(assessmentService.sendAssessment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'test@example.com',
+        })
+      );
+    });
+
+    // Verify that navigate was NOT called (navigation fix)
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    // Verify success toast was shown
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining('test@example.com')
+      );
+    });
+
+    // Verify we're still on the template details page
+    expect(screen.getByText('Test Template')).toBeInTheDocument();
+  });
+
+  it('should handle assessment send failure gracefully', async () => {
+    // Mock failed assessment send
+    assessmentService.sendAssessment.mockRejectedValue(new Error('Send failed'));
+
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <AuthTestProvider>
+            <TemplateDetails />
+          </AuthTestProvider>
+        </BrowserRouter>
+      );
+    });
+
+    // Wait for template details to load
+    await waitFor(() => {
+      expect(screen.getByText('Test Template')).toBeInTheDocument();
+    });
+
+    // Find and click the "Send Assessment" button
+    const sendButton = screen.getByRole('button', { name: /send assessment/i });
+    
+    await act(async () => {
+      fireEvent.click(sendButton);
+    });
+
+    // Modal should appear for email input
+    await waitFor(() => {
+      expect(screen.getByText(/send assessment/i)).toBeInTheDocument();
+    });
+
+    // Find email input and submit with invalid email
+    const emailInput = screen.getByRole('textbox');
+    const submitButton = screen.getByRole('button', { name: /ok/i });
+
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.click(submitButton);
+    });
+
+    // Wait for API call
+    await waitFor(() => {
+      expect(assessmentService.sendAssessment).toHaveBeenCalled();
+    });
+
+    // Verify that navigate was NOT called even on error
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    // Verify we're still on the template details page
+    expect(screen.getByText('Test Template')).toBeInTheDocument();
+  });
+});

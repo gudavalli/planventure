@@ -35,7 +35,9 @@ Start-Service -ServiceName "Account Service" -Path "c:\Users\sreen\learning\copi
 
 # Start Web Application (Port 5173 - Vite default)
 Write-Host "Starting Web Application..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'c:\Users\sreen\learning\copilot-agent\planventure\planventure-web'; npm run dev" -WindowStyle Normal
+#Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'c:\Users\sreen\learning\copilot-agent\planventure\planventure-web'; npm run dev" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", "cd 'c:\Users\sreen\learning\copilot-agent\planventure\planventure-web'; npm run dev" -WindowStyle Normal
+
 
 Write-Host "`nAll services starting up..." -ForegroundColor Green
 Write-Host "Assessment Service: http://localhost:5001" -ForegroundColor Cyan

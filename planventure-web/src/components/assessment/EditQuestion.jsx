@@ -17,6 +17,10 @@ const EditQuestion = () => {
   const searchParams = new URLSearchParams(location.search);
   const returnTo = searchParams.get('returnTo') || '/assessments/questions';
   
+  // For cancel navigation, we should go back to ViewQuestionDetails instead of the original returnTo
+  // This handles the flow: Template → View → Edit → Cancel → should return to View (not Template)
+  const cancelNavigationPath = `/assessments/questions/${questionId}`;
+  
   const [question, setQuestion] = useState(null);
   const [formData, setFormData] = useState({
     content: '',
@@ -338,11 +342,10 @@ const EditQuestion = () => {
                   />
                 </div>
               </div>
-              
-              <div className="d-flex justify-content-end gap-2">                <Button
+                <div className="d-flex justify-content-end gap-2">                <Button
                   type="button"
                   className="btn btn-outline-secondary"
-                  onClick={() => navigate(returnTo)}
+                  onClick={() => navigate(cancelNavigationPath)}
                 >
                   Cancel
                 </Button>

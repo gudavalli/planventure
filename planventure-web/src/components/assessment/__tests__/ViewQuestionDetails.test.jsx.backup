@@ -1,0 +1,168 @@
+import React from 'react';
+import { render, screen, act } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import { vi, describe, it, beforeEach, expect } from 'vitest';
+import AuthTestProvider from '../../../test-utils/AuthTestProvider';
+import ViewQuestionDetails from '../ViewQuestionDetails';
+import { assessmentService } from '../../../services/api';
+
+// Mock react-router-dom
+const mockUseParams = vi.fn();
+const mockUseLocation = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useParams: () => mockUseParams(),
+    useLocation: () => mockUseLocation(),
+  };
+});
+
+// Mock assessmentService
+vi.mock('../../../services/api', () => ({
+  assessmentService: {
+    getQuestionDetails: vi.fn(),
+  },
+}));
+
+// Mock the hooks
+vi.mock('../../../hooks/useApiErrorHandler', () => ({
+  useApiErrorHandler: () => ({
+    handleError: vi.fn(),
+  }),
+}));
+
+describe('ViewQuestionDetails', () => {
+  beforeEach(() => {
+    // Reset mocks
+    vi.clearAllMocks();
+    
+    // Setup default mock responses
+    mockUseParams.mockReturnValue({ questionId: '123' });
+    mockUseLocation.mockReturnValue({
+      pathname: '/assessments/questions/123',
+      state: null,
+    });
+    
+    assessmentService.getQuestionDetails.mockResolvedValue({
+      id: 123,
+      content: 'What is the capital of France?',
+      specialization: 'aptitude',
+      options: ['London', 'Paris', 'Berlin', 'Madrid'],
+      correct_answer: 'Paris',
+      explanation: 'Paris is the capital of France.',
+      difficulty: 'medium',
+      time_limit: 60,
+    });
+  });
+
+  it('renders question details correctly', async () => {
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <AuthTestProvider>
+            <ViewQuestionDetails />
+          </AuthTestProvider>
+        </BrowserRouter>
+      );
+    });
+
+    // Wait for question details to load
+    expect(await screen.findByText('What is the capital of France?')).toBeInTheDocument();
+    expect(screen.getByText('Paris is the capital of France.')).toBeInTheDocument();
+    expect(screen.getByText('medium')).toBeInTheDocument();
+    expect(screen.getByText('60 seconds')).toBeInTheDocument();
+  });
+
+  it('generates edit link with correct returnTo parameter when no state.from is provided', async () => {
+    mockUseLocation.mockReturnValue({
+      pathname: '/assessments/questions/123',
+      state: null,
+    });
+
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <AuthTestProvider>
+            <ViewQuestionDetails />
+          </AuthTestProvider>
+        </BrowserRouter>
+      );
+    });
+
+    // Wait for question details to load
+    await screen.findByText('What is the capital of France?');
+    
+    // Check if edit link has correct returnTo parameter using current pathname
+    const editButton = screen.getByRole('link', { name: /edit/i });
+    expect(editButton).toHaveAttribute(
+      'href', 
+      '/assessments/questions/123/edit?returnTo=%2Fassessments%2Fquestions%2F123'
+    );
+  });
+
+  it('generates edit link with correct returnTo parameter when state.from is provided', async () => {
+    // Mock location with state.from (simulating navigation from template details)
+    mockUseLocation.mockReturnValue({
+      pathname: '/assessments/questions/123',
+      state: { from: '/assessments/templates/1' },
+    });
+
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <AuthTestProvider>
+            <ViewQuestionDetails />
+          </AuthTestProvider>
+        </BrowserRouter>
+      );
+    });
+
+    // Wait for question details to load
+    await screen.findByText('What is the capital of France?');
+    
+    // Check if edit link has correct returnTo parameter using state.from
+    const editButton = screen.getByRole('link', { name: /edit/i });
+    expect(editButton).toHaveAttribute(
+      'href', 
+      '/assessments/questions/123/edit?returnTo=%2Fassessments%2Ftemplates%2F1'
+    );
+  });
+
+  it('handles loading state properly', () => {
+    // Make the API call pending
+    assessmentService.getQuestionDetails.mockReturnValue(new Promise(() => {}));
+
+    render(
+      <BrowserRouter>
+        <AuthTestProvider>
+          <ViewQuestionDetails />
+        </AuthTestProvider>
+      </BrowserRouter>
+    );
+
+    // Should show loading spinner
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  it('handles API error gracefully', async () => {
+    // Mock API error
+    assessmentService.getQuestionDetails.mockRejectedValue(new Error('API Error'));
+
+    await act(async () => {
+      render(
+        <BrowserRouter>
+          <AuthTestProvider>
+            <ViewQuestionDetails />
+          </AuthTestProvider>
+        </BrowserRouter>
+      );
+    });
+
+    // Should handle error gracefully (exact behavior depends on component implementation)
+    // The component should not crash and should show some error state
+    expect(screen.queryByText('What is the capital of France?')).not.toBeInTheDocument();
+  });
+});

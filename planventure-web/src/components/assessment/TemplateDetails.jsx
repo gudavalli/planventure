@@ -103,7 +103,7 @@ const TemplateDetails = () => {
     })
     .then(() => {
       toast.success(`Assessment created for ${email}`);
-      navigate(`/assessments`);
+      // Stay on the current template details page instead of navigating away
     })
     .catch(error => {
       handleError(error);
