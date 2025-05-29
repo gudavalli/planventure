@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import EditQuestion from '../EditQuestion';
 import { assessmentService } from '../../../services/api';
@@ -81,7 +81,6 @@ describe('EditQuestion Cancel Navigation', () => {
       time_limit: 60,
     });
   });
-
   it('should always navigate to ViewQuestionDetails on cancel, regardless of returnTo parameter', async () => {
     // Mock location to simulate coming from template with returnTo parameter pointing to template
     mockUseLocation.mockReturnValue({
@@ -100,12 +99,11 @@ describe('EditQuestion Cancel Navigation', () => {
       expect(screen.getByLabelText(/Question Content/i)).toBeInTheDocument();
     });
 
-    // Click the Cancel button
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);    // Verify navigation goes to ViewQuestionDetails, NOT to the returnTo template path
-    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/123');
+    // Check that the Cancel link has the correct href pointing to ViewQuestionDetails
+    // The shared QuestionForm uses Link component, so we check href instead of expecting navigate calls
+    const cancelLink = screen.getByRole('link', { name: /cancel/i });
+    expect(cancelLink).toHaveAttribute('href', '/question-bank/123');
   });
-
   it('should navigate to ViewQuestionDetails when no returnTo parameter', async () => {
     // Mock location without returnTo parameter
     mockUseLocation.mockReturnValue({
@@ -124,12 +122,10 @@ describe('EditQuestion Cancel Navigation', () => {
       expect(screen.getByLabelText(/Question Content/i)).toBeInTheDocument();
     });
 
-    // Click the Cancel button
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);    // Verify navigation to ViewQuestionDetails page
-    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/123');
+    // Check that the Cancel link has the correct href pointing to ViewQuestionDetails
+    const cancelLink = screen.getByRole('link', { name: /cancel/i });
+    expect(cancelLink).toHaveAttribute('href', '/question-bank/123');
   });
-
   it('should fix the original navigation issue: Template → View → Edit → Cancel should go to View', async () => {
     // This test simulates the exact issue described in the task:
     // User follows: Assessment template → view question → edit question → cancel → back
@@ -151,15 +147,14 @@ describe('EditQuestion Cancel Navigation', () => {
       expect(screen.getByLabelText(/Question Content/i)).toBeInTheDocument();
     });
 
-    // Click the Cancel button
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);    // FIXED: Cancel now goes back to ViewQuestionDetails instead of directly to template
-    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/123');
+    // Check that the Cancel link has the correct href pointing to ViewQuestionDetails
+    // FIXED: Cancel now goes back to ViewQuestionDetails instead of directly to template
+    const cancelLink = screen.getByRole('link', { name: /cancel/i });
+    expect(cancelLink).toHaveAttribute('href', '/question-bank/123');
     
     // The returnTo parameter should still be available for the save operation (not tested here)
     // but cancel operation should ignore it and use cancelNavigationPath
   });
-
   it('should maintain consistent cancel behavior with different question IDs', async () => {
     // Test with different question ID to ensure the cancelNavigationPath is dynamic
     mockUseParams.mockReturnValue({ questionId: '456' });
@@ -180,9 +175,8 @@ describe('EditQuestion Cancel Navigation', () => {
       expect(screen.getByLabelText(/Question Content/i)).toBeInTheDocument();
     });
 
-    // Click the Cancel button
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);    // Should navigate to the correct ViewQuestionDetails page for this question
-    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/456');
+    // Check that the Cancel link has the correct href pointing to ViewQuestionDetails for this question
+    const cancelLink = screen.getByRole('link', { name: /cancel/i });
+    expect(cancelLink).toHaveAttribute('href', '/question-bank/456');
   });
 });

@@ -2,12 +2,12 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, describe, test, beforeEach, expect } from 'vitest';
-import EditQuestion from './EditQuestion';
-import { assessmentService } from '../../services/api';
+import EditQuestion from '../EditQuestion';
+import { assessmentService } from '../../../services/api';
 
 // Mock the error handler
 const mockHandleError = vi.fn();
-vi.mock('../../hooks/useApiErrorHandler', () => ({
+vi.mock('../../../hooks/useApiErrorHandler', () => ({
   useApiErrorHandler: () => ({
     handleError: mockHandleError
   })
@@ -21,7 +21,7 @@ const mockAuthContext = {
   logout: vi.fn()
 };
 
-vi.mock('../../context/auth-hooks', () => ({
+vi.mock('../../../context/auth-hooks', () => ({
   useAuth: () => mockAuthContext
 }));
 
@@ -38,8 +38,40 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock react-hot-toast
+vi.mock('react-hot-toast', () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn()
+  }
+}));
+
+// Mock Navigation and Button components
+vi.mock('../../Navigation', () => ({
+  default: () => <nav>Navigation</nav>
+}));
+
+vi.mock('../../Button', () => ({
+  default: ({ children, onClick, type, variant, isLoading, disabled }) => (
+    <button 
+      onClick={onClick} 
+      type={type} 
+      className={`btn ${variant}`}
+      disabled={disabled || isLoading}
+    >
+      {children}
+    </button>
+  )
+}));
+
+vi.mock('../../Input', () => ({
+  default: ({ value, onChange, ...props }) => (
+    <input value={value} onChange={onChange} {...props} />
+  )
+}));
+
 // Mock the assessment service
-vi.mock('../../services/api', () => ({
+vi.mock('../../../services/api', () => ({
   assessmentService: {
     getQuestionDetails: vi.fn(),
     updateQuestion: vi.fn()
@@ -103,6 +135,10 @@ describe('EditQuestion Component', () => {
     const contentInput = screen.getByLabelText(/Question Content/i);
     fireEvent.change(contentInput, { target: { value: 'Updated question content' } });
     
+    // Select a correct answer first (required for submission)
+    const letterA = screen.getByTitle('Select option A as correct answer');
+    fireEvent.click(letterA);
+    
     // Find form with querySelector and submit it
     const form = container.querySelector('form');
     expect(form).toBeTruthy();
@@ -164,6 +200,10 @@ describe('EditQuestion Component', () => {
       expect(screen.getByLabelText(/Question Content/i).value).toBe('Test question');
     });
     
+    // Select a correct answer first (required for submission)
+    const letterA = screen.getByTitle('Select option A as correct answer');
+    fireEvent.click(letterA);
+    
     // Submit the form using direct form submission
     const form = container.querySelector('form');
     expect(form).toBeTruthy();
@@ -198,7 +238,15 @@ describe('EditQuestion Component', () => {
     const letterB = screen.getByTitle('Select option B as correct answer');
     const letterC = screen.getByTitle('Select option C as correct answer');
     
-    // Initially, letter A should be selected (btn-success) since correct_answer is 0
+    // Initially, no letter should be selected since the form starts without a correct answer set
+    expect(letterA).toHaveClass('btn-outline-secondary');
+    expect(letterB).toHaveClass('btn-outline-secondary');
+    expect(letterC).toHaveClass('btn-outline-secondary');
+    
+    // Click on letter A
+    fireEvent.click(letterA);
+    
+    // Now letter A should be selected (btn-success)
     expect(letterA).toHaveClass('btn-success');
     expect(letterB).toHaveClass('btn-outline-secondary');
     expect(letterC).toHaveClass('btn-outline-secondary');

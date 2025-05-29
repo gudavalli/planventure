@@ -77,27 +77,40 @@ vi.mock('../../../services/api', () => ({
 describe('CreateQuestion Clickable Letters', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-  test('clickable option letters work correctly in CreateQuestion', async () => {
+  });  test('clickable option letters work correctly in CreateQuestion', async () => {
     render(
       <BrowserRouter>
         <CreateQuestion />
       </BrowserRouter>
-    );
-      // Wait for component to render
+    );    // Wait for component to render
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Create Question' })).toBeInTheDocument();
     });
       // Should be in Multiple Choice mode by default
-    const selectElement = screen.getByRole('combobox');
+    const selectElement = screen.getByRole('combobox', { name: /question type/i });
     expect(selectElement).toHaveValue('aptitude');
     expect(screen.getByText('Multiple Choice')).toBeInTheDocument();
     
-    // Find the option letter buttons (A, B, C, D) - they start with empty options
-    const letterA = screen.getByTitle('Mark option A as correct answer');
-    const letterB = screen.getByTitle('Mark option B as correct answer');
-    const letterC = screen.getByTitle('Mark option C as correct answer');
-    const letterD = screen.getByTitle('Mark option D as correct answer');
+    // Add some option text so the letter buttons appear
+    const optionA = screen.getByPlaceholderText('Option A');
+    const optionB = screen.getByPlaceholderText('Option B');
+    const optionC = screen.getByPlaceholderText('Option C'); 
+    const optionD = screen.getByPlaceholderText('Option D');
+    
+    fireEvent.change(optionA, { target: { value: 'Option A text' } });
+    fireEvent.change(optionB, { target: { value: 'Option B text' } });
+    fireEvent.change(optionC, { target: { value: 'Option C text' } });
+    fireEvent.change(optionD, { target: { value: 'Option D text' } });
+    
+    // Now find the option letter buttons (A, B, C, D) - they use the shared component pattern
+    await waitFor(() => {
+      expect(screen.getByTitle('Select option A as correct answer')).toBeInTheDocument();
+    });
+    
+    const letterA = screen.getByTitle('Select option A as correct answer');
+    const letterB = screen.getByTitle('Select option B as correct answer');
+    const letterC = screen.getByTitle('Select option C as correct answer');
+    const letterD = screen.getByTitle('Select option D as correct answer');
     
     // Initially, no letter should be selected (all should be outline-secondary)
     expect(letterA).toHaveClass('btn-outline-secondary');
@@ -146,8 +159,7 @@ describe('CreateQuestion Clickable Letters', () => {
     expect(screen.getByPlaceholderText('Option B')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Option C')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Option D')).toBeInTheDocument();
-  });
-  test('instructions text is displayed', async () => {
+  });  test('instructions text is displayed', async () => {
     render(
       <BrowserRouter>
         <CreateQuestion />
@@ -159,7 +171,13 @@ describe('CreateQuestion Clickable Letters', () => {
       expect(screen.getByRole('heading', { name: 'Create Question' })).toBeInTheDocument();
     });
     
+    // Add some option text so the instruction text appears
+    const optionA = screen.getByPlaceholderText('Option A');
+    fireEvent.change(optionA, { target: { value: 'Option A text' } });
+    
     // Check that the instruction text is displayed
-    expect(screen.getByText('Click on the letter (A, B, C, D) to mark the correct answer. The selected letter will turn green.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Click on the letter (A, B, C, D) to mark the correct answer. The selected letter will turn green.')).toBeInTheDocument();
+    });
   });
 });
