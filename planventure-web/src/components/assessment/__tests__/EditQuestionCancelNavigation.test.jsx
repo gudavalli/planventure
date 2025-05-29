@@ -102,10 +102,8 @@ describe('EditQuestion Cancel Navigation', () => {
 
     // Click the Cancel button
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);
-
-    // Verify navigation goes to ViewQuestionDetails, NOT to the returnTo template path
-    expect(mockNavigate).toHaveBeenCalledWith('/assessments/questions/123');
+    fireEvent.click(cancelButton);    // Verify navigation goes to ViewQuestionDetails, NOT to the returnTo template path
+    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/123');
   });
 
   it('should navigate to ViewQuestionDetails when no returnTo parameter', async () => {
@@ -128,10 +126,8 @@ describe('EditQuestion Cancel Navigation', () => {
 
     // Click the Cancel button
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);
-
-    // Verify navigation to ViewQuestionDetails page
-    expect(mockNavigate).toHaveBeenCalledWith('/assessments/questions/123');
+    fireEvent.click(cancelButton);    // Verify navigation to ViewQuestionDetails page
+    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/123');
   });
 
   it('should fix the original navigation issue: Template → View → Edit → Cancel should go to View', async () => {
@@ -157,10 +153,8 @@ describe('EditQuestion Cancel Navigation', () => {
 
     // Click the Cancel button
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);
-
-    // FIXED: Cancel now goes back to ViewQuestionDetails instead of directly to template
-    expect(mockNavigate).toHaveBeenCalledWith('/assessments/questions/123');
+    fireEvent.click(cancelButton);    // FIXED: Cancel now goes back to ViewQuestionDetails instead of directly to template
+    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/123');
     
     // The returnTo parameter should still be available for the save operation (not tested here)
     // but cancel operation should ignore it and use cancelNavigationPath
@@ -188,9 +182,7 @@ describe('EditQuestion Cancel Navigation', () => {
 
     // Click the Cancel button
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);
-
-    // Should navigate to the correct ViewQuestionDetails page for this question
-    expect(mockNavigate).toHaveBeenCalledWith('/assessments/questions/456');
+    fireEvent.click(cancelButton);    // Should navigate to the correct ViewQuestionDetails page for this question
+    expect(mockNavigate).toHaveBeenCalledWith('/question-bank/456');
   });
 });

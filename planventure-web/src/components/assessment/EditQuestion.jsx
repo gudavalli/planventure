@@ -12,14 +12,13 @@ const EditQuestion = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { handleError } = useApiErrorHandler();
-  
-  // Extract the returnTo path from URL search params if it exists
+    // Extract the returnTo path from URL search params if it exists
   const searchParams = new URLSearchParams(location.search);
-  const returnTo = searchParams.get('returnTo') || '/assessments/questions';
+  const returnTo = searchParams.get('returnTo') || '/question-bank';
   
   // For cancel navigation, we should go back to ViewQuestionDetails instead of the original returnTo
   // This handles the flow: Template → View → Edit → Cancel → should return to View (not Template)
-  const cancelNavigationPath = `/assessments/questions/${questionId}`;
+  const cancelNavigationPath = `/question-bank/${questionId}`;
   
   const [question, setQuestion] = useState(null);
   const [formData, setFormData] = useState({
@@ -251,48 +250,72 @@ const EditQuestion = () => {
                     'Enter your question here. Be clear and concise.'}
                 </div>
               </div>
-              
-              {/* Show options section for aptitude or any question with options */}
+                {/* Show options section for aptitude or any question with options */}
               {(formData.specialization === 'aptitude' || (Array.isArray(formData.options) && formData.options.length > 0)) && (
                 <>
                   <div className="mb-3">
                     <label className="form-label">Options</label>
-                    {formData.options.map((option, index) => (
-                      <div key={index} className="input-group mb-2">
-                        <div className="input-group-text">
+                    <div className="form-text mb-2">
+                      Click on the letter (A, B, C, D) to mark the correct answer. The selected letter will turn green.
+                    </div>
+                    {formData.options.map((option, index) => {
+                      const letters = ['A', 'B', 'C', 'D'];
+                      const letter = letters[index] || String.fromCharCode(65 + index);
+                      const isCorrect = formData.correct_answer === index;
+                      
+                      return (
+                        <div key={index} className="d-flex align-items-center mb-2 gap-2">
+                          <button
+                            type="button"
+                            className={`btn btn-sm fw-bold d-flex align-items-center justify-content-center ${
+                              isCorrect 
+                                ? 'btn-success text-white' 
+                                : 'btn-outline-secondary'
+                            }`}
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              fontSize: '16px'
+                            }}
+                            onClick={() => setFormData(prev => ({ ...prev, correct_answer: index }))}
+                            title={`Mark option ${letter} as correct answer`}
+                          >
+                            {letter}
+                          </button>
                           <input
-                            type="radio"
-                            name="correct_answer"
-                            checked={formData.correct_answer === index}
-                            onChange={() => setFormData(prev => ({ ...prev, correct_answer: index }))}
-                            aria-label={`Option ${index + 1} is correct`}
+                            type="text"
+                            className="form-control"
+                            value={option}
+                            onChange={(e) => handleOptionChange(index, e.target.value)}
+                            placeholder={`Option ${letter}`}
+                            required
                           />
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => handleRemoveOption(index)}
+                            title="Remove this option"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
                         </div>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={option}
-                          onChange={(e) => handleOptionChange(index, e.target.value)}
-                          placeholder={`Option ${index + 1}`}
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger"
-                          onClick={() => handleRemoveOption(index)}
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                     
                     <button
                       type="button"
                       className="btn btn-outline-secondary"
                       onClick={handleAddOption}
+                      disabled={formData.options.length >= 6}
                     >
                       <i className="bi bi-plus-circle me-2"></i>Add Option
                     </button>
+                    {formData.options.length >= 6 && (
+                      <div className="form-text text-muted mt-1">
+                        Maximum of 6 options allowed
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mb-3">

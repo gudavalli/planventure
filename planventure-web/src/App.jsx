@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import AuthProvider from './context/AuthContext'
 import Navigation from './components/Navigation'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -38,6 +38,17 @@ import {
 
 import './App.css'
 import './styles/print.css'
+
+// Redirect components for deprecated assessment question routes
+const AssessmentQuestionRedirect = () => {
+  const { questionId } = useParams();
+  return <Navigate to={`/question-bank/${questionId}`} replace />;
+};
+
+const AssessmentQuestionEditRedirect = () => {
+  const { questionId } = useParams();
+  return <Navigate to={`/question-bank/${questionId}/edit`} replace />;
+};
 
 function App() {
   return (
@@ -126,7 +137,7 @@ function App() {
               path="/assessments/questions"
               element={
                 <TalentLeadRoute>
-                  <AssessmentQuestions />
+                  <Navigate to="/question-bank" replace />
                 </TalentLeadRoute>
               }
             />
@@ -134,7 +145,7 @@ function App() {
               path="/assessments/questions/create"
               element={
                 <TalentLeadRoute>
-                  <CreateAssessmentQuestion />
+                  <Navigate to="/question-bank/create" replace />
                 </TalentLeadRoute>
               }
             />
@@ -142,7 +153,7 @@ function App() {
               path="/assessments/questions/:questionId"
               element={
                 <TalentLeadRoute>
-                  <ViewAssessmentQuestion />
+                  <AssessmentQuestionRedirect />
                 </TalentLeadRoute>
               }
             />
@@ -150,7 +161,7 @@ function App() {
               path="/assessments/questions/:questionId/edit"
               element={
                 <TalentLeadRoute>
-                  <EditAssessmentQuestion />
+                  <AssessmentQuestionEditRedirect />
                 </TalentLeadRoute>
               }
             />

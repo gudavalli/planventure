@@ -91,9 +91,8 @@ const AssessmentDashboard = () => {
           {/* Templates Section */}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Assessment Templates</h5>
-            <div>
-              <Link to="/assessments/questions" className="btn btn-sm btn-outline-primary">
+            <h5 className="mb-0">Assessment Templates</h5>            <div>
+              <Link to="/question-bank" className="btn btn-sm btn-outline-primary">
                 View All
               </Link>
             </div>

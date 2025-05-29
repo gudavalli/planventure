@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { vi, describe, it, test, beforeEach, expect } from 'vitest';
+import { vi, describe, test, beforeEach, expect } from 'vitest';
 import EditQuestion from './EditQuestion';
 import { assessmentService } from '../../services/api';
 
@@ -152,8 +152,7 @@ describe('EditQuestion Component', () => {
       expect(toast.error).toHaveBeenCalledWith('Question content is required');
       expect(assessmentService.updateQuestion).not.toHaveBeenCalled();
     });
-  });
-  test('handles API errors', async () => {
+  });  test('handles API errors', async () => {
     // Mock API error
     const mockError = new Error('API Error');
     assessmentService.updateQuestion.mockRejectedValue(mockError);
@@ -179,5 +178,44 @@ describe('EditQuestion Component', () => {
     await waitFor(() => {
       expect(mockHandleError).toHaveBeenCalledWith(mockError);
     });
+  });
+
+  test('clickable option letters work correctly', async () => {
+    render(
+      <BrowserRouter>
+        <EditQuestion />
+      </BrowserRouter>
+    );
+    
+    // Wait for the data to load
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Question Content/i).value).toBe('Test question');
+    });
+    
+    // Find the option letter buttons (A, B, C)
+    const letterA = screen.getByTitle('Mark option A as correct answer');
+    const letterB = screen.getByTitle('Mark option B as correct answer');
+    const letterC = screen.getByTitle('Mark option C as correct answer');
+    
+    // Initially, letter A should be selected (green) since correct_answer is 0
+    expect(letterA).toHaveClass('btn-success');
+    expect(letterB).toHaveClass('btn-outline-secondary');
+    expect(letterC).toHaveClass('btn-outline-secondary');
+    
+    // Click on letter B
+    fireEvent.click(letterB);
+    
+    // Now letter B should be selected (green) and A should be deselected
+    expect(letterA).toHaveClass('btn-outline-secondary');
+    expect(letterB).toHaveClass('btn-success');
+    expect(letterC).toHaveClass('btn-outline-secondary');
+    
+    // Click on letter C
+    fireEvent.click(letterC);
+    
+    // Now letter C should be selected (green) and B should be deselected
+    expect(letterA).toHaveClass('btn-outline-secondary');
+    expect(letterB).toHaveClass('btn-outline-secondary');
+    expect(letterC).toHaveClass('btn-success');
   });
 });

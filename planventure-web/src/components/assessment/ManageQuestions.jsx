@@ -72,7 +72,7 @@ const ManageQuestions = () => {
       <div className="container py-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h1 className="h3 mb-0">Assessment Questions</h1>
-          <Link to="/assessments/questions/create" className="btn btn-primary">
+          <Link to="/question-bank/create" className="btn btn-primary">
             <i className="bi bi-plus-circle me-2"></i>Create Question
           </Link>
         </div>
@@ -150,17 +150,16 @@ const ManageQuestions = () => {
                         </td>
                         <td>
                           {question.options ? question.options.length : '-'}
-                        </td>
-                        <td>
+                        </td>                        <td>
                           <div className="btn-group btn-group-sm">
                             <Link 
-                              to={`/assessments/questions/${question.id}`}
+                              to={`/question-bank/${question.id}`}
                               className="btn btn-outline-secondary"
                             >
                               <i className="bi bi-eye"></i>
                             </Link>
                             <Link 
-                              to={`/assessments/questions/${question.id}/edit`}
+                              to={`/question-bank/${question.id}/edit`}
                               className="btn btn-outline-primary"
                             >
                               <i className="bi bi-pencil"></i>

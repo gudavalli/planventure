@@ -211,8 +211,7 @@ const TemplateDetails = () => {
                 onClick={() => setShowAddQuestionsModal(true)}
               >
                 <i className="bi bi-plus-circle me-1"></i> Add Questions
-              </Button>
-              <Link to="/assessments/questions/create" className="btn btn-sm btn-outline-primary">
+              </Button>              <Link to="/question-bank/create" className="btn btn-sm btn-outline-primary">
                 <i className="bi bi-plus-circle me-1"></i> Create New Question
               </Link>
             </div>
@@ -255,17 +254,16 @@ const TemplateDetails = () => {
                           <td>
                             {question.options ? question.options.length : '-'}
                           </td>
-                          <td>
-                            <div className="btn-group" role="group">
+                          <td>                            <div className="btn-group" role="group">
                               <Link 
-                                to={`/assessments/questions/${question.id}`}
+                                to={`/question-bank/${question.id}`}
                                 state={{ from: `/assessments/templates/${templateId}` }}
                                 className="btn btn-sm btn-outline-secondary"
                               >
                                 View
                               </Link>
                               <Link 
-                                to={`/assessments/questions/${question.id}/edit?returnTo=${encodeURIComponent(`/assessments/templates/${templateId}`)}`}
+                                to={`/question-bank/${question.id}/edit?returnTo=${encodeURIComponent(`/assessments/templates/${templateId}`)}`}
                                 className="btn btn-sm btn-outline-primary"
                               >
                                 Edit

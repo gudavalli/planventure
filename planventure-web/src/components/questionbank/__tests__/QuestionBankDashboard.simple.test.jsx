@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
+import AuthTestProvider from '../../../test-utils/AuthTestProvider';
 import QuestionBankDashboard from '../QuestionBankDashboard';
 import { assessmentService } from '../../../services/api';
 
@@ -63,9 +64,11 @@ const mockQuestionsResponse = {
 
 const renderComponent = () => {
   return render(
-    <MemoryRouter>
-      <QuestionBankDashboard />
-    </MemoryRouter>
+    <AuthTestProvider>
+      <MemoryRouter>
+        <QuestionBankDashboard />
+      </MemoryRouter>
+    </AuthTestProvider>
   );
 };
 
@@ -75,11 +78,10 @@ describe('QuestionBankDashboard', () => {
     assessmentService.getQuestions.mockResolvedValue(mockQuestionsResponse);
   });
 
-  describe('Initial Rendering', () => {
-    it('renders the dashboard with correct header', async () => {
+  describe('Initial Rendering', () => {    it('renders the dashboard with correct header', async () => {
       renderComponent();
 
-      expect(screen.getByText('Question Bank')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Question Bank' })).toBeInTheDocument();
       expect(screen.getByText('Manage your assessment questions independently')).toBeInTheDocument();
     });
 
@@ -208,10 +210,8 @@ describe('QuestionBankDashboard', () => {
       const mockError = new Error('API Error');
       assessmentService.getQuestions.mockRejectedValue(mockError);
 
-      renderComponent();
-
-      // The component should still render without crashing
-      expect(screen.getByText('Question Bank')).toBeInTheDocument();
+      renderComponent();      // The component should still render without crashing
+      expect(screen.getByRole('heading', { name: 'Question Bank' })).toBeInTheDocument();
     });
   });
 });

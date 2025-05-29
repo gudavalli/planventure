@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../Navigation';
 import Button from '../Button';
@@ -179,11 +179,10 @@ const CreateQuestion = () => {
         // Then create the question with the reading set ID
         questionData.reading_set_id = response.id;
       }
-      
-      response = await assessmentService.createQuestion(questionData);
+        response = await assessmentService.createQuestion(questionData);
       
       toast.success('Question created successfully');
-      navigate('/assessments/questions');
+      navigate('/question-bank');
     } catch (error) {
       handleError(error);
     } finally {
@@ -270,34 +269,53 @@ const CreateQuestion = () => {
                   
                   {/* Options for Multiple Choice and Reading Comprehension */}
                   {(questionType === 'aptitude' || questionType === 'reading_comprehension') && (
-                    <div className="mb-4">
-                      <label className="form-label">Answer Options</label>
-                        {formData.options.map((option, index) => (                        <div className="input-group mb-2" key={index}>
-                          <div className="input-group-text">
+                    <div className="mb-4">                      <label className="form-label">Answer Options</label>
+                      <div className="form-text mb-2">
+                        Click on the letter (A, B, C, D) to mark the correct answer. The selected letter will turn green.
+                      </div>
+                      {formData.options.map((option, index) => {
+                        const letters = ['A', 'B', 'C', 'D'];
+                        const letter = letters[index] || String.fromCharCode(65 + index);
+                        const isCorrect = formData.correct_answer === index;
+                        
+                        return (
+                          <div key={index} className="d-flex align-items-center mb-2 gap-2">
+                            <button
+                              type="button"
+                              className={`btn btn-sm fw-bold d-flex align-items-center justify-content-center ${
+                                isCorrect 
+                                  ? 'btn-success text-white' 
+                                  : 'btn-outline-secondary'
+                              }`}
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                fontSize: '16px'
+                              }}
+                              onClick={() => setFormData(prev => ({ ...prev, correct_answer: index }))}
+                              title={`Mark option ${letter} as correct answer`}
+                            >
+                              {letter}
+                            </button>
                             <input
-                              type="radio"
-                              name="correct_answer"
-                              checked={formData.correct_answer === index}
-                              onChange={() => setFormData(prev => ({ ...prev, correct_answer: index }))}
-                              // Removed the disabled condition to always allow selection
+                              type="text"
+                              className="form-control"
+                              placeholder={`Option ${letter}`}
+                              value={option}
+                              onChange={(e) => handleOptionChange(index, e.target.value)}
                             />
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => removeOption(index)}
+                              title="Remove this option"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
                           </div>
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder={`Option ${index + 1}`}
-                            value={option}
-                            onChange={(e) => handleOptionChange(index, e.target.value)}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-outline-danger"
-                            onClick={() => removeOption(index)}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                         {errors.options && (
                         <div className="text-danger mb-2 small">
                           {errors.options}
@@ -310,22 +328,26 @@ const CreateQuestion = () => {
                           {errors.correct_answer}
                         </div>
                       )}
-                      
-                      <button
+                        <button
                         type="button"
                         className="btn btn-sm btn-outline-secondary"
                         onClick={addOption}
+                        disabled={formData.options.length >= 6}
                       >
                         <i className="bi bi-plus-circle me-1"></i> Add Option
                       </button>
+                      {formData.options.length >= 6 && (
+                        <div className="form-text text-muted mt-1">
+                          Maximum of 6 options allowed
+                        </div>
+                      )}
                     </div>
                   )}
-                  
-                  <div className="d-flex justify-content-between mt-4">
+                    <div className="d-flex justify-content-between mt-4">
                     <Button
                       type="button"
                       variant="light"
-                      onClick={() => navigate('/assessments/questions')}
+                      onClick={() => navigate('/question-bank')}
                     >
                       Cancel
                     </Button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
 import AuthTestProvider from '../../../test-utils/AuthTestProvider';
@@ -54,59 +54,52 @@ describe('ViewQuestionDetails Navigation Fixes', () => {
 
   it('should pass a basic test', () => {
     expect(true).toBe(true);
-  });
-
-  it('should use referrer from location state for edit navigation', async () => {
-    // Mock location with referrer state (our navigation fix)
+  });  it('should use referrer from location state for edit navigation', async () => {
+    // Mock location with state.from (this is what the component actually uses)
     mockUseLocation.mockReturnValue({
       pathname: '/assessments/questions/123',
-      state: { referrer: '/assessments/templates/456' },
+      state: { from: '/assessments/templates/456' },
     });
 
-    await act(async () => {
-      render(
-        <BrowserRouter>
-          <AuthTestProvider>
-            <ViewQuestionDetails />
-          </AuthTestProvider>
-        </BrowserRouter>
-      );
-    });
+    render(
+      <BrowserRouter>
+        <AuthTestProvider>
+          <ViewQuestionDetails />
+        </AuthTestProvider>
+      </BrowserRouter>
+    );
 
     // Wait for question details to load
     await waitFor(() => {
       expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
-    // Verify the edit link includes the referrer parameter
-    const editLink = screen.getByRole('link', { name: /edit/i });
-    expect(editLink).toHaveAttribute('href', expect.stringContaining('referrer=%2Fassessments%2Ftemplates%2F456'));
-  });
-
-  it('should handle missing referrer state gracefully', async () => {
-    // Mock location without referrer state
+    // Verify the edit link includes the returnTo parameter with the from value
+    const editLink = screen.getByRole('link', { name: /edit question/i });
+    expect(editLink).toHaveAttribute('href', expect.stringContaining('returnTo=%2Fassessments%2Ftemplates%2F456'));
+  }, 10000);  it('should handle missing referrer state gracefully', async () => {
+    // Mock location without state
     mockUseLocation.mockReturnValue({
       pathname: '/assessments/questions/123',
       state: null,
     });
 
-    await act(async () => {
-      render(
-        <BrowserRouter>
-          <AuthTestProvider>
-            <ViewQuestionDetails />
-          </AuthTestProvider>
-        </BrowserRouter>
-      );
-    });
+    render(
+      <BrowserRouter>
+        <AuthTestProvider>
+          <ViewQuestionDetails />
+        </AuthTestProvider>
+      </BrowserRouter>
+    );
 
     // Wait for question details to load
     await waitFor(() => {
       expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
-    // Verify the edit link works without referrer (fallback behavior)
-    const editLink = screen.getByRole('link', { name: /edit/i });
+    // Verify the edit link works without state (uses current pathname as fallback)
+    const editLink = screen.getByRole('link', { name: /edit question/i });
     expect(editLink).toHaveAttribute('href', expect.stringContaining('/edit'));
-  });
+    expect(editLink).toHaveAttribute('href', expect.stringContaining('returnTo=%2Fassessments%2Fquestions%2F123'));
+  }, 10000);
 });

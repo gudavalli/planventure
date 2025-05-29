@@ -16,11 +16,10 @@ const ViewQuestionDetails = () => {
     try {
       setIsLoading(true);
       const data = await assessmentService.getQuestionDetails(questionId);
-      setQuestion(data);
-    } catch (error) {
+      setQuestion(data);    } catch (error) {
       handleError(error);
-      navigate('/assessments/questions');
-    } finally {
+      navigate('/question-bank');
+    }finally {
       setIsLoading(false);
     }
   }, [questionId, handleError, navigate]);
@@ -73,10 +72,9 @@ const ViewQuestionDetails = () => {
   if (!question) {
     return (
       <div className="min-vh-100 bg-light">
-        <Navigation />
-        <div className="container py-4">
+        <Navigation />        <div className="container py-4">
           <div className="alert alert-danger">Question not found</div>
-          <Link to="/assessments/questions" className="btn btn-primary">
+          <Link to="/question-bank" className="btn btn-primary">
             Back to Questions
           </Link>
         </div>
@@ -89,12 +87,11 @@ const ViewQuestionDetails = () => {
       <Navigation />
       <div className="container py-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1 className="h3 mb-0">Question Details</h1>
-          <div>            <Link 
-              to={location.state?.from || "/assessments/questions"}
+          <h1 className="h3 mb-0">Question Details</h1>          <div>            <Link 
+              to={location.state?.from || "/question-bank"}
               className="btn btn-outline-secondary me-2"
             >
-              <i className="bi bi-arrow-left me-1"></i>Back            </Link><Link to={`/assessments/questions/${questionId}/edit?returnTo=${encodeURIComponent(location.state?.from || location.pathname)}`} className="btn btn-primary">
+              <i className="bi bi-arrow-left me-1"></i>Back            </Link><Link to={`/question-bank/${questionId}/edit?returnTo=${encodeURIComponent(location.state?.from || location.pathname)}`} className="btn btn-primary">
               <i className="bi bi-pencil me-1"></i>Edit Question
             </Link>
           </div>
