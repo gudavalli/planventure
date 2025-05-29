@@ -2,6 +2,11 @@ from flask import current_app
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+# Assuming models.user exists and User is importable
+# If models is a package, it would be from models.user import User or from ..models.user import User
+# Given the project structure, models is likely a directory at the same level as utils
+from models.user import User
+
 
 def send_email(to_email, subject, html_content):
     """Send email using SMTP."""
@@ -40,6 +45,29 @@ def send_verification_email(user, verification_url):
     </html>
     """
     return send_email(user.email, subject, html_content)
+
+def send_admin_user_verification_notification(admin_user: User, verified_user: User, role_assignment_url: str):
+    """Send notification to admin about new user verification."""
+    subject = "New User Verification - Awaiting Role Assignment"
+    html_content = f"""
+    <html>
+        <body>
+            <h2>New User Verified</h2>
+            <p>A new user has verified their email address and is awaiting role assignment:</p>
+            <ul>
+                <li><strong>User Email:</strong> {verified_user.email}</li>
+                <li><strong>User ID:</strong> {verified_user.id}</li>
+                <li><strong>First Name:</strong> {verified_user.first_name or 'N/A'}</li>
+                <li><strong>Last Name:</strong> {verified_user.last_name or 'N/A'}</li>
+                <li><strong>Verification Time:</strong> {verified_user.updated_at.strftime('%Y-%m-%d %H:%M:%S %Z') if verified_user.updated_at else 'N/A'}</li>
+            </ul>
+            <p>Please assign a role to this user by clicking the link below:</p>
+            <p><a href="{role_assignment_url}">Assign Role for {verified_user.email}</a></p>
+            <p>If you are not the intended recipient or this notification is unexpected, please disregard this email.</p>
+        </body>
+    </html>
+    """
+    return send_email(admin_user.email, subject, html_content)
 
 def send_password_reset_email(user, reset_url):
     """Send password reset link."""

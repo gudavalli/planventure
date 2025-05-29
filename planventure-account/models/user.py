@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, UTC
 import secrets
+from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from .roles import UserRole
@@ -31,6 +32,7 @@ class User(db.Model):
     # Verification and reset tokens
     verification_token = db.Column(db.String(100), unique=True)
     verification_token_expires = db.Column(db.DateTime)
+    verification_token_used = db.Column(db.Boolean, default=False, nullable=False)
     reset_token = db.Column(db.String(100), unique=True)
     reset_token_expires = db.Column(db.DateTime)
 
@@ -53,17 +55,20 @@ class User(db.Model):
     def generate_verification_token(self):
         """Generate verification token for email verification."""
         self.verification_token = secrets.token_urlsafe(32)
-        self.verification_token_expires = datetime.now(UTC)
+        self.verification_token_expires = datetime.now(UTC) + timedelta(hours=current_app.config['EMAIL_VERIFICATION_TOKEN_EXPIRES_HOURS'])
+        self.verification_token_used = False
 
     def verify_email(self, token):
         """Verify email with token."""
         now = datetime.now(UTC)
         token_expires = self.verification_token_expires.replace(tzinfo=UTC) if self.verification_token_expires else None
         
-        if (token == self.verification_token and 
-            token_expires and 
-            token_expires > now):
+        if (token == self.verification_token and
+            token_expires and
+            token_expires > now and
+            not self.verification_token_used):
             self.is_verified = True
+            self.verification_token_used = True
             self.verification_token = None
             self.verification_token_expires = None
             return True

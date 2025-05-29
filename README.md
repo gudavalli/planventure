@@ -32,6 +32,7 @@ cd planventure-account
 pip install -r requirements.txt
 flask run
 ```
+For detailed setup, configuration (including essential environment variables like `DATABASE_URL`, `SECRET_KEY`, `JWT_SECRET_KEY`, `FRONTEND_URL`, email server settings, and new user onboarding configurations like `ALLOWED_EMAIL_DOMAINS`), user onboarding flow, initial admin user creation, and admin role assignment for the Account Service, please refer to the dedicated `planventure-account/README.md`.
 
 ### Frontend Setup
 

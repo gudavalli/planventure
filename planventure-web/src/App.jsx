@@ -15,6 +15,7 @@ import Users from './pages/Users'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
+import AdminAssignRole from './pages/AdminAssignRole'
 
 // Assessment Pages
 import Assessments from './pages/Assessments'
@@ -211,6 +212,16 @@ function App() {
             {/* Public assessment routes (accessible via token) */}
             <Route path="/assessment/:assessmentId" element={<AssessmentTake />} />
             <Route path="/assessment/results/:assessmentId" element={<AssessmentResult />} />
+
+            {/* Admin specific routes */}
+            <Route
+              path="/admin/assign-role"
+              element={
+                <AdminRoute>
+                  <AdminAssignRole />
+                </AdminRoute>
+              }
+            />
             
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

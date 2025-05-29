@@ -6,7 +6,7 @@ from app import db
 from models import User
 from models.roles import UserRole
 from middleware.rbac import role_required
-from utils import send_verification_email, send_password_reset_email
+from utils import send_verification_email, send_password_reset_email, send_admin_user_verification_notification
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -27,6 +27,15 @@ def register():
         validation_errors['email'] = 'Email is required'
     elif '@' not in email or '.' not in email:
         validation_errors['email'] = 'Invalid email format'
+    else:
+        # Domain validation
+        domain = email.split('@')[-1]
+        allowed_domains = current_app.config['ALLOWED_EMAIL_DOMAINS']
+        if domain not in allowed_domains:
+            return jsonify({
+                'error': 'Invalid email domain',
+                'details': 'Registration is only allowed for specific email domains.'
+            }), 400
         
     # Password validation
     password = data.get('password')
@@ -186,6 +195,12 @@ def login():
         user = db.session.execute(
             db.select(User).filter_by(email=data['email'])
         ).scalar_one_or_none()
+
+        if user and not user.is_verified:
+            return jsonify({
+                'error': 'Email not verified',
+                'details': 'Please verify your email address before logging in. Check your inbox for a verification link.'
+            }), 401
         
         if not user or not user.check_password(data['password']):
             return jsonify({'error': 'Invalid email or password'}), 401
@@ -221,6 +236,80 @@ def login():
             'type': type(e).__name__
         }), 500
 
+@auth_bp.route('/admin/users/assign-role', methods=['GET'])
+@jwt_required()
+@role_required(UserRole.ADMIN)
+def list_users_for_role_assignment():
+    """List users who are verified and have the default candidate role."""
+    try:
+        users_awaiting_assignment = db.session.query(User).filter_by(
+            is_verified=True, 
+            role=UserRole.CANDIDATE.value
+        ).all()
+        
+        return jsonify({
+            'users_awaiting_assignment': [user.to_dict() for user in users_awaiting_assignment]
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching users for role assignment: {str(e)}")
+        return jsonify({
+            'error': 'Failed to retrieve users for assignment',
+            'details': str(e)
+        }), 500
+
+@auth_bp.route('/admin/users/<int:user_id>/assign-role', methods=['PUT'])
+@jwt_required()
+@role_required(UserRole.ADMIN)
+def admin_assign_user_role(user_id):
+    """Assign a role to a specific user."""
+    try:
+        data = request.get_json()
+        if not data or 'role' not in data:
+            return jsonify({'error': 'Role is required in the request body'}), 400
+
+        new_role_value = data['role']
+        if not UserRole.has_value(new_role_value):
+            return jsonify({
+                'error': 'Invalid role provided',
+                'details': f"Role '{new_role_value}' is not a valid role. Available roles: {', '.join(role.value for role in UserRole)}"
+            }), 400
+
+        user = db.session.get(User, user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Optional: Check if the user is in a state that allows role assignment (e.g., is_verified)
+        if not user.is_verified:
+            return jsonify({
+                'error': 'User is not verified',
+                'details': 'Cannot assign role to an unverified user.'
+            }), 400
+        
+        # Optional: Check if user already has the target role or is not a candidate anymore
+        if user.role != UserRole.CANDIDATE.value and user.role != new_role_value : # allow re-assigning same role or changing if still candidate
+             current_app.logger.warning(f"User {user_id} role is '{user.role}', attempting to set to '{new_role_value}'. Verify if this is intended.")
+             # Depending on policy, you might want to prevent changing roles from non-candidate roles here
+             # For now, we allow it if the admin explicitly calls this endpoint.
+
+        user.set_role(new_role_value) # set_role method in User model handles validation
+        db.session.commit()
+
+        return jsonify({
+            'message': f"Role '{new_role_value}' assigned successfully to user {user.email}",
+            'user': user.to_dict()
+        }), 200
+
+    except ValueError as ve: # Catch specific errors from set_role if any
+        db.session.rollback()
+        return jsonify({'error': 'Failed to set role due to validation error', 'details': str(ve)}), 400
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error assigning role to user {user_id}: {str(e)}")
+        return jsonify({
+            'error': 'Failed to assign role',
+            'details': str(e)
+        }), 500
+
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
@@ -251,6 +340,25 @@ def verify_email(token):
             
         if user.verify_email(token):
             db.session.commit()
+            
+            # Notify admins
+            try:
+                admin_users = db.session.query(User).filter_by(role=UserRole.ADMIN.value).all()
+                if admin_users:
+                    # Construct role assignment URL (ensure FRONTEND_URL is set in config)
+                    # Default to request.host_url if FRONTEND_URL is not available
+                    frontend_url = current_app.config.get('FRONTEND_URL', request.host_url.rstrip('/'))
+                    role_assignment_url = f"{frontend_url}/admin/assign-role/{user.id}"
+                    
+                    for admin_user in admin_users:
+                        send_admin_user_verification_notification(admin_user, user, role_assignment_url)
+                    current_app.logger.info(f"Sent role assignment notification to {len(admin_users)} admin(s) for user {user.email}")
+                else:
+                    current_app.logger.warning(f"No admin users found to notify for user {user.email} verification.")
+            except Exception as email_notify_error:
+                current_app.logger.error(f"Failed to send admin notification emails: {str(email_notify_error)}")
+                # Do not fail the verification process if admin notification fails
+            
             return jsonify({'message': 'Email verified successfully'}), 200
         return jsonify({'error': 'Invalid or expired token'}), 400
     except Exception as e:

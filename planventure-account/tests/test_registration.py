@@ -85,3 +85,50 @@ def test_register_with_role_unauthorized(client, talent_lead_headers):
         }
     )
     assert response.status_code == 403
+
+def test_register_allowed_domain(client, app):
+    """Test registration with an allowed email domain."""
+    with app.app_context():
+        original_domains = current_app.config.get('ALLOWED_EMAIL_DOMAINS')
+        current_app.config['ALLOWED_EMAIL_DOMAINS'] = ['example.com', 'test.com']
+
+    response = client.post('/api/auth/register', json={
+        'email': 'user@example.com',
+        'password': 'Password123!'
+    })
+    assert response.status_code == 201 # Assuming registration is successful
+    data = json.loads(response.data)
+    assert data['user']['email'] == 'user@example.com'
+
+    # Restore original config
+    with app.app_context():
+        if original_domains is not None:
+            current_app.config['ALLOWED_EMAIL_DOMAINS'] = original_domains
+        else:
+            # If it wasn't there, clean up by removing the key
+            if 'ALLOWED_EMAIL_DOMAINS' in current_app.config:
+                 del current_app.config['ALLOWED_EMAIL_DOMAINS']
+
+
+def test_register_disallowed_domain(client, app):
+    """Test registration with a disallowed email domain."""
+    with app.app_context():
+        original_domains = current_app.config.get('ALLOWED_EMAIL_DOMAINS')
+        current_app.config['ALLOWED_EMAIL_DOMAINS'] = ['specific.com']
+
+    response = client.post('/api/auth/register', json={
+        'email': 'user@anotherdomain.com',
+        'password': 'Password123!'
+    })
+    assert response.status_code == 400
+    data = json.loads(response.data)
+    assert 'error' in data
+    assert data['error'] == 'Invalid email domain'
+
+    # Restore original config
+    with app.app_context():
+        if original_domains is not None:
+            current_app.config['ALLOWED_EMAIL_DOMAINS'] = original_domains
+        else:
+            if 'ALLOWED_EMAIL_DOMAINS' in current_app.config:
+                del current_app.config['ALLOWED_EMAIL_DOMAINS']

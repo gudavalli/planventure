@@ -31,6 +31,10 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@planventure.com')
 
+    # Email verification settings
+    ALLOWED_EMAIL_DOMAINS = os.environ.get('ALLOWED_EMAIL_DOMAINS', 'company.com').split(',')
+    EMAIL_VERIFICATION_TOKEN_EXPIRES_HOURS = int(os.environ.get('EMAIL_VERIFICATION_TOKEN_EXPIRES_HOURS', 24))
+
 class DevConfig(Config):
     """Development config."""
     DEBUG = True
