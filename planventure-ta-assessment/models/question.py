@@ -15,10 +15,11 @@ class Question(Base):
     __tablename__ = 'questions'
     
     id = db.Column(db.Integer, primary_key=True)
-    specialization = db.Column(db.String(50), nullable=False)  # aptitude, reading_comprehension, typing
+    question_type = db.Column(db.String(50), nullable=False)  # multiple_choice, reading_comprehension, typing
+    specialization = db.Column(db.String(50), nullable=False)  # aptitude, verbal, quantitative, logical, etc.
     content = db.Column(db.Text, nullable=False)
-    options = db.Column(db.JSON)  # For aptitude: list of options, For reading_comprehension: might be null
-    correct_answer = db.Column(db.Text)  # For aptitude: correct option, For typing: null
+    options = db.Column(db.JSON)  # For multiple_choice: list of options, For reading_comprehension: might be null
+    correct_answer = db.Column(db.Text)  # For multiple_choice: correct option, For typing: null
     explanation = db.Column(db.Text, nullable=True)  # Explanation for correct answer (optional)
     difficulty = db.Column(db.String(10), default='medium')  # easy, medium, hard
     time_limit = db.Column(db.Integer, default=60)  # Time limit in seconds

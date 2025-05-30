@@ -14,19 +14,47 @@ def create_question():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['specialization', 'content']
+        required_fields = ['content']
         missing_fields = [field for field in required_fields if field not in data]
+        
+        # For tests that expect specialization validation
+        if 'specialization' not in data and 'question_type' not in data:
+            missing_fields.append('specialization')
+        
         if missing_fields:
             return jsonify({
                 'error': 'Missing required fields',
                 'missing_fields': missing_fields
             }), 400
-
+            
+        # Handle backward compatibility: if question_type is not provided but specialization is,
+        # infer the question_type from specialization
+        question_type = data.get('question_type')
+        specialization = data.get('specialization')
+        
+        if not question_type and specialization:
+            # Map old specialization values to question_type
+            type_mapping = {
+                'aptitude': 'multiple_choice',
+                'reading_comprehension': 'reading_comprehension', 
+                'typing': 'typing'
+            }
+            question_type = type_mapping.get(specialization, 'multiple_choice')
+        elif not question_type:
+            question_type = 'multiple_choice'  # Default
+            
+        if not specialization:
+            specialization = 'aptitude'  # Default
+            
         question = Question(
-            specialization=data['specialization'],
+            question_type=question_type,
+            specialization=specialization,
             content=data['content'],
             options=data.get('options'),
-            correct_answer=data.get('correct_answer')
+            correct_answer=data.get('correct_answer'),
+            explanation=data.get('explanation'),
+            difficulty=data.get('difficulty', 'medium'),
+            time_limit=data.get('time_limit', 60)
         )
         
         # If it's a reading comprehension question, link it to the reading set
@@ -47,6 +75,7 @@ def get_questions():
         # Get query parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
+        question_type = request.args.get('type')
         specialization = request.args.get('specialization')
         search = request.args.get('search')
         sort_by = request.args.get('sort_by', 'created_at')  # Default sort by creation date
@@ -57,8 +86,16 @@ def get_questions():
         query = Question.query
         
         # Apply filters
+        if question_type:
+            query = query.filter_by(question_type=question_type)
+        
         if specialization:
             query = query.filter_by(specialization=specialization)
+            
+        # Backward compatibility: if we get a specialization filter but it's one of the old format types,
+        # also filter by question_type
+        if specialization in ['reading_comprehension', 'typing']:
+            query = query.filter_by(question_type=specialization)
         if search:
             search_term = f"%{search}%"
             query = query.filter(Question.content.ilike(search_term))
@@ -74,14 +111,14 @@ def get_questions():
         
         # Convert to list of dictionaries for JSON serialization
         questions = []
-        for q in paginated_questions.items:
-            # Convert correct_answer back to int if it's a numeric string
+        for q in paginated_questions.items:            # Convert correct_answer back to int if it's a numeric string
             correct_answer = q.correct_answer
             if correct_answer is not None and str(correct_answer).isdigit():
                 correct_answer = int(correct_answer)
             
             question_data = {
                 'id': q.id,
+                'question_type': q.question_type,  # Add question_type to response
                 'specialization': q.specialization,
                 'content': q.content,
                 'options': q.options,
@@ -125,8 +162,7 @@ def get_questions():
 @questions.route('/questions/<int:question_id>', methods=['PUT'])
 def update_question(question_id):
     try:
-        # Check for valid JSON first
-        try:
+        # Check for valid JSON first        try:
             data = request.get_json()
             if data is None:
                 return jsonify({'error': 'Invalid JSON format'}), 400
@@ -135,6 +171,8 @@ def update_question(question_id):
         
         question = Question.query.get_or_404(question_id)
         
+        if 'question_type' in data:
+            question.question_type = data['question_type']
         if 'specialization' in data:
             question.specialization = data['specialization']
         if 'content' in data:
@@ -188,14 +226,14 @@ def delete_question(question_id):
 def get_question(question_id):
     try:
         question = Question.query.get_or_404(question_id)
-        
-        # Convert correct_answer back to int if it's a numeric string
+          # Convert correct_answer back to int if it's a numeric string
         correct_answer = question.correct_answer
         if correct_answer is not None and str(correct_answer).isdigit():
             correct_answer = int(correct_answer)
         
         result = {
             'id': question.id,
+            'question_type': question.question_type,  # Add question_type to response
             'specialization': question.specialization,
             'content': question.content,
             'options': question.options,

@@ -35,7 +35,7 @@ def create_question():
     try:
         # Check for valid JSON first
         try:
-            data = request.get_json()
+            data = request.get_json(force=False)
             if data is None:
                 return jsonify({'error': 'Invalid JSON format'}), 400
         except Exception:
@@ -78,7 +78,7 @@ def create_question():
             content=data['content'],
             options=data.get('options'),
             correct_answer=data.get('correct_answer'),
-            explanation=data.get('explanation'),
+            explanation=data.get('explanation', None),
             difficulty=data.get('difficulty', 'medium'),
             time_limit=data.get('time_limit', 60)
         )
@@ -94,6 +94,11 @@ def create_question():
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
+    except Exception as e:
+        db.session.rollback()
+        if '404' in str(e):
+            return jsonify({'error': 'Reading set not found'}), 404
+        return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500
 
 @questions.route('/questions', methods=['GET'])
 def get_questions():
@@ -101,35 +106,28 @@ def get_questions():
         # Get query parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
+        question_type = request.args.get('type')
         specialization = request.args.get('specialization')
-        difficulty = request.args.get('difficulty')  # Add difficulty parameter
-        question_type = request.args.get('type')  # For filtering by question type (multiple_choice, reading_comprehension, typing)
         search = request.args.get('search')
         sort_by = request.args.get('sort_by', 'created_at')  # Default sort by creation date
         order = request.args.get('order', 'desc')  # Default order descending
-        simple_format = request.args.get('simple', 'true').lower() == 'true'  # Default to simple format for backward compatibility
+        simple_format = request.args.get('simple', 'true').lower() == 'true'  # Default to simple format
         
         # Build query
         query = Question.query
         
         # Apply filters
+        if question_type:
+            query = query.filter_by(question_type=question_type)
+        
         if specialization:
             query = query.filter_by(specialization=specialization)
-        
-        # Apply question type filter (can work alongside specialization)
-        if question_type and question_type != 'all':
-            # Filter by question_type field
-            query = query.filter_by(question_type=question_type)
             
-            # Backward compatibility: if the question_type is one of the old format types
-            # and no specialization is specified, also filter by specialization
-            if question_type in ['typing', 'reading_comprehension'] and not specialization:
-                query = query.filter_by(specialization=question_type)
-        
-        # Apply difficulty filter
-        if difficulty:
-            query = query.filter_by(difficulty=difficulty)
-        
+        # Backward compatibility: if we get a specialization filter but it's one of the old format types,
+        # also filter by question_type
+        if specialization in ['reading_comprehension', 'typing']:
+            query = query.filter_by(question_type=specialization)
+            
         if search:
             search_term = f"%{search}%"
             query = query.filter(Question.content.ilike(search_term))
@@ -139,7 +137,8 @@ def get_questions():
             query = query.order_by(getattr(Question, sort_by).desc())
         else:
             query = query.order_by(getattr(Question, sort_by).asc())
-          # Apply pagination
+        
+        # Apply pagination
         paginated_questions = query.paginate(page=page, per_page=per_page)
         
         # Convert to list of dictionaries for JSON serialization
@@ -152,7 +151,7 @@ def get_questions():
             
             question_data = {
                 'id': q.id,
-                'question_type': q.question_type,
+                'question_type': q.question_type,  # Include question_type in the response
                 'specialization': q.specialization,
                 'content': q.content,
                 'options': q.options,
@@ -231,12 +230,12 @@ def update_question(question_id):
         
         # Explicitly update the updated_at timestamp
         question.updated_at = datetime.now(UTC)
+        
         # Mark the object as modified to ensure SQLAlchemy detects the changes
         from sqlalchemy import inspect
         inspect(question).modified = True
         
         db.session.commit()
-        
         return jsonify({'message': 'Question updated successfully'}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
@@ -258,10 +257,10 @@ def get_question(question_id):
         correct_answer = question.correct_answer
         if correct_answer is not None and str(correct_answer).isdigit():
             correct_answer = int(correct_answer)
-            
+        
         result = {
             'id': question.id,
-            'question_type': question.question_type,
+            'question_type': question.question_type,  # Include question_type in the response
             'specialization': question.specialization,
             'content': question.content,
             'options': question.options,
@@ -285,17 +284,6 @@ def get_question(question_id):
             return jsonify({'error': 'Question not found'}), 404
         return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500
 
-@questions.route('/questions/<int:question_id>', methods=['DELETE'])
-def delete_question(question_id):
-    try:
-        question = Question.query.get_or_404(question_id)
-        db.session.delete(question)
-        db.session.commit()
-        return jsonify({'message': 'Question deleted successfully'}), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        return jsonify({'error': 'Database error', 'details': str(e)}), 500
-
 @questions.route('/reading-sets', methods=['POST'])
 def create_reading_set():
     try:
@@ -309,8 +297,11 @@ def create_reading_set():
                 'error': 'Missing required fields',
                 'missing_fields': missing_fields
             }), 400
-
-        reading_set = ReadingComprehensionSet(paragraph=data['paragraph'])
+            
+        reading_set = ReadingComprehensionSet(
+            paragraph=data['paragraph']
+        )
+        
         db.session.add(reading_set)
         db.session.commit()
         
@@ -327,20 +318,17 @@ def get_reading_set(reading_set_id):
     try:
         reading_set = ReadingComprehensionSet.query.get_or_404(reading_set_id)
         
-        # Get questions associated with this reading set
+        # Build questions list
         questions_data = []
         for question in reading_set.questions:
-            # Convert correct_answer back to int if it's a numeric string
-            correct_answer = question.correct_answer
-            if correct_answer is not None and str(correct_answer).isdigit():
-                correct_answer = int(correct_answer)
-                
             questions_data.append({
                 'id': question.id,
+                'question_type': question.question_type,  # Include question_type in the response
                 'specialization': question.specialization,
                 'content': question.content,
                 'options': question.options,
-                'correct_answer': correct_answer
+                'correct_answer': question.correct_answer,
+                'explanation': question.explanation
             })
         
         result = {
@@ -352,6 +340,26 @@ def get_reading_set(reading_set_id):
         return jsonify(result), 200
     except SQLAlchemyError as e:
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
+    except Exception as e:
+        if '404' in str(e):
+            return jsonify({'error': 'Reading set not found'}), 404
+        return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500
+
+@questions.route('/questions/<int:question_id>', methods=['DELETE'])
+def delete_question(question_id):
+    try:
+        question = Question.query.get_or_404(question_id)
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({'message': 'Question deleted successfully'}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'error': 'Database error', 'details': str(e)}), 500
+    except Exception as e:
+        db.session.rollback()
+        if '404' in str(e):
+            return jsonify({'error': 'Question not found'}), 404
+        return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500
 
 @questions.route('/questions/typing/validate', methods=['POST'])
 def validate_typing_response():
@@ -366,43 +374,55 @@ def validate_typing_response():
                 'error': 'Missing required fields',
                 'missing_fields': missing_fields
             }), 400
-        
+            
         # Get the question
         question = Question.query.get_or_404(data['question_id'])
-        if question.specialization != 'typing':
+        
+        # Ensure it's a typing question
+        if question.question_type != 'typing':
             return jsonify({'error': 'Not a typing question'}), 400
-        
-        # Calculate accuracy
-        target_text = question.content
+            
+        # Calculate accuracy using sequence matcher
+        correct_text = question.content
         user_text = data['user_response']
-        time_taken_ms = data['time_taken_ms']
         
-        # Calculate accuracy using SequenceMatcher
-        accuracy = SequenceMatcher(None, target_text, user_text).ratio() * 100
+        matcher = SequenceMatcher(None, correct_text, user_text)
+        accuracy = matcher.ratio() * 100
         
         # Calculate words per minute
-        # Standard formula: (characters / 5) / (time in minutes)
-        char_count = len(user_text)
-        minutes = time_taken_ms / (1000 * 60)  # Convert ms to minutes
-        wpm = (char_count / 5) / minutes if minutes > 0 else 0
+        total_time_seconds = data['time_taken_ms'] / 1000
+        words = correct_text.split()
+        total_words = len(words)
         
-        # Identify error positions
+        # Standard formula: (chars typed / 5) / (time in minutes)
+        # Using 5 chars as average word length
+        chars_typed = len(user_text)
+        minutes = total_time_seconds / 60
+        wpm = (chars_typed / 5) / minutes if minutes > 0 else 0
+        
+        # Find error positions
         error_positions = []
-        for i, (c1, c2) in enumerate(zip(target_text, user_text)):
-            if c1 != c2:
-                error_positions.append(i)
-                
-        # If lengths differ, mark all remaining positions as errors
-        for i in range(min(len(target_text), len(user_text)), max(len(target_text), len(user_text))):
-            error_positions.append(i)
-        
+        common_blocks = matcher.get_matching_blocks()
+        current_pos = 0
+        for block in common_blocks:
+            if block.a > current_pos:
+                # There's an error between current_pos and block.a
+                error_positions.append((current_pos, block.a))
+            current_pos = block.a + block.size
+            
         result = {
-            'accuracy_percentage': round(accuracy, 2),
-            'words_per_minute': round(wpm, 2),
+            'accuracy_percentage': accuracy,
+            'words_per_minute': wpm,
             'error_positions': error_positions,
-            'time_taken_ms': time_taken_ms
+            'correct_text': correct_text,
+            'user_text': user_text
         }
         
         return jsonify(result), 200
+        
     except SQLAlchemyError as e:
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
+    except Exception as e:
+        if '404' in str(e):
+            return jsonify({'error': 'Question not found'}), 404
+        return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500

@@ -4,6 +4,7 @@ import Navigation from '../Navigation';
 import Button from '../Button';
 import { assessmentService } from '../../services/api';
 import { useApiErrorHandler } from '../../hooks/useApiErrorHandler';
+import toast from 'react-hot-toast';
 import { 
   QUESTION_TYPES, 
   SPECIALIZATIONS,
@@ -86,47 +87,7 @@ const QuestionBankDashboard = () => {
 
   const fetchStats = useCallback(async () => {
     try {
-      // Fetch questions by type to calculate statistics
-      const allQuestions = await assessmentService.getQuestions(1, 1000, '', '');
-      const questionsList = allQuestions.questions || allQuestions || [];
-      
-      const stats = questionsList.reduce((acc, question) => {
-        acc.total++;
-        
-        // Determine question type based on new field or fallback to specialization
-        const questionType = question.question_type || question.specialization;
-        
-        // Count by question type
-        if (questionType === QUESTION_TYPES.MULTIPLE_CHOICE || 
-            (question.options && question.options.length > 0 && 
-             questionType !== QUESTION_TYPES.READING_COMPREHENSION && 
-             questionType !== QUESTION_TYPES.TYPING)) {
-          acc.multiple_choice++;
-        } else if (questionType === QUESTION_TYPES.READING_COMPREHENSION) {
-          acc.reading_comprehension++;
-        } else if (questionType === QUESTION_TYPES.TYPING) {
-          acc.typing++;
-        }
-        
-        // Count recent questions (created in last 7 days)
-        const created = new Date(question.created_at);
-        const now = new Date();
-        const diffTime = Math.abs(now - created);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays <= 7) {
-          acc.recent++;
-        }
-        
-        return acc;
-      }, {
-        total: 0,
-        multiple_choice: 0,
-        reading_comprehension: 0,
-        typing: 0,
-        recent: 0
-      });
-      
+      const stats = await assessmentService.getQuestionStats();
       setStats(stats);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -160,15 +121,6 @@ const QuestionBankDashboard = () => {
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
-  };
-  
-  // Reset all filters
-  const handleResetFilters = () => {
-    setSearch('');
-    setSelectedQuestionType('');
-    setSelectedSpecialization('');
-    setPage(1);
-    fetchQuestions();
   };
 
   const getQuestionType = (question) => {
@@ -237,6 +189,14 @@ const QuestionBankDashboard = () => {
   const getFilterCompatibilityMessage = () => {
     // Use the shared utility function to generate the message
     return getRecommendationMessage(selectedQuestionType, selectedSpecialization);
+  };
+  
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearch('');
+    setSelectedQuestionType('');
+    setSelectedSpecialization('');
+    setPage(1);
   };
 
   return (

@@ -6,13 +6,19 @@ import Navigation from '../Navigation';
 import Button from '../Button';
 import { Modal } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { 
+  QUESTION_TYPES, 
+  SPECIALIZATIONS,
+  getRecommendationMessage
+} from '../../utils/questionValidation';
 
-const QuestionBankDashboard = () => {
-  const [questions, setQuestions] = useState([]);
+const QuestionBankDashboard = () => {  const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');  const [selectedSpecialization, setSelectedSpecialization] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');  
+  const [selectedSpecialization, setSelectedSpecialization] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
-  const [selectedQuestionType, setSelectedQuestionType] = useState('');  const [pagination, setPagination] = useState({
+  const [selectedQuestionType, setSelectedQuestionType] = useState('');  
+  const [pagination, setPagination] = useState({
     page: 1,
     totalPages: 1,
     totalItems: 0,
@@ -23,17 +29,24 @@ const QuestionBankDashboard = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   
   const { handleError } = useApiErrorHandler();
-  const specializations = [
-    { value: '', label: 'All Specializations' },
-    { value: 'aptitude', label: 'Aptitude' },
-    { value: 'verbal', label: 'Verbal' },
-    { value: 'quantitative', label: 'Quantitative' },
-    { value: 'logical', label: 'Logical' },
-    { value: 'technical', label: 'Technical' },
-    { value: 'programming', label: 'Programming' },
-    { value: 'analytics', label: 'Analytics' },
-    { value: 'typing', label: 'Typing' },
-    { value: 'reading_comprehension', label: 'Reading Comprehension' }
+  // Question formats (types)
+  const questionTypeOptions = [
+    { value: '', label: 'All Question Formats' },
+    { value: QUESTION_TYPES.MULTIPLE_CHOICE, label: 'Multiple Choice' },
+    { value: QUESTION_TYPES.READING_COMPREHENSION, label: 'Reading Comprehension' },
+    { value: QUESTION_TYPES.TYPING, label: 'Typing Test' }
+  ];
+  
+  // Subject areas (specializations)
+  const specializationOptions = [
+    { value: '', label: 'All Subject Areas' },
+    { value: SPECIALIZATIONS.APTITUDE, label: 'Aptitude' },
+    { value: SPECIALIZATIONS.VERBAL, label: 'Verbal' },
+    { value: SPECIALIZATIONS.QUANTITATIVE, label: 'Quantitative' },
+    { value: SPECIALIZATIONS.LOGICAL, label: 'Logical' },
+    { value: SPECIALIZATIONS.TECHNICAL, label: 'Technical' },
+    { value: SPECIALIZATIONS.PROGRAMMING, label: 'Programming' },
+    { value: SPECIALIZATIONS.ANALYTICS, label: 'Analytics' }
   ];
   const difficulties = [
     { value: '', label: 'All Difficulties' },
@@ -142,44 +155,49 @@ const fetchQuestions = useCallback(async () => {
       case 'hard': return 'badge bg-danger';
       default: return 'badge bg-secondary';
     }
-  };
-  const getSpecializationBadgeClass = (specialization) => {
+  };  const getSpecializationBadgeClass = (specialization) => {
     const classes = {
-      'aptitude': 'badge bg-primary',
-      'verbal': 'badge bg-info',
-      'quantitative': 'badge bg-warning text-dark',
-      'logical': 'badge bg-success',
-      'technical': 'badge bg-danger'
+      [SPECIALIZATIONS.APTITUDE]: 'badge bg-primary',
+      [SPECIALIZATIONS.VERBAL]: 'badge bg-info',
+      [SPECIALIZATIONS.QUANTITATIVE]: 'badge bg-warning text-dark',
+      [SPECIALIZATIONS.LOGICAL]: 'badge bg-success',
+      [SPECIALIZATIONS.TECHNICAL]: 'badge bg-danger',
+      [SPECIALIZATIONS.PROGRAMMING]: 'badge bg-dark',
+      [SPECIALIZATIONS.ANALYTICS]: 'badge bg-secondary'
     };
-    return classes[specialization?.toLowerCase()] || 'badge bg-secondary';
-  };
-  const getQuestionType = (question) => {
+    return classes[specialization] || 'badge bg-secondary';
+  };const getQuestionType = (question) => {
+    // First check if question_type is available (new field)
+    if (question.question_type) {
+      return question.question_type;
+    }
+    
+    // Fallback logic for backward compatibility
     // If specialization field contains known type values, use them
-    if (['reading_comprehension', 'typing'].includes(question.specialization)) {
+    if ([QUESTION_TYPES.READING_COMPREHENSION, QUESTION_TYPES.TYPING].includes(question.specialization)) {
       return question.specialization;
     }
     
-    // For all other specializations (including 'aptitude' and subject names), determine type based on structure
+    // For all other specializations, determine type based on structure
     if (question.options && question.options.length > 0) {
       // Check if it's reading comprehension by looking for long content or reading set
       if (question.reading_set || question.content.includes('\n\n') || question.content.length > 300) {
-        return 'reading_comprehension';
+        return QUESTION_TYPES.READING_COMPREHENSION;
       }
-      return 'aptitude'; // Multiple choice question with options
+      return QUESTION_TYPES.MULTIPLE_CHOICE; // Multiple choice question with options
     }
     
     // Default to typing for text-only questions without options
-    return 'typing';
+    return QUESTION_TYPES.TYPING;
   };
-
   const getQuestionTypeBadgeClass = (question) => {
     const questionType = getQuestionType(question);
     switch (questionType) {
-      case 'aptitude':
+      case QUESTION_TYPES.MULTIPLE_CHOICE:
         return 'badge bg-primary';
-      case 'reading_comprehension':
+      case QUESTION_TYPES.READING_COMPREHENSION:
         return 'badge bg-info';
-      case 'typing':
+      case QUESTION_TYPES.TYPING:
         return 'badge bg-success';
       default:
         return 'badge bg-secondary';
@@ -189,32 +207,19 @@ const fetchQuestions = useCallback(async () => {
   const formatQuestionType = (question) => {
     const questionType = getQuestionType(question);
     switch (questionType) {
-      case 'aptitude':
+      case QUESTION_TYPES.MULTIPLE_CHOICE:
         return 'Multiple Choice';
-      case 'reading_comprehension':
+      case QUESTION_TYPES.READING_COMPREHENSION:
         return 'Reading Comprehension';
-      case 'typing':
+      case QUESTION_TYPES.TYPING:
         return 'Typing Test';
       default:
         return questionType || 'N/A';
     }
-  };
-
-  // Helper function to check filter compatibility
+  };// Helper function to check filter compatibility
   const getFilterCompatibilityMessage = () => {
-    if (selectedQuestionType && selectedSpecialization) {
-      // Check for incompatible combinations
-      if (selectedQuestionType === 'typing' && selectedSpecialization !== 'typing') {
-        return 'Note: Typing questions are typically only found in the "typing" specialization.';
-      }
-      if (selectedQuestionType === 'reading_comprehension' && selectedSpecialization !== 'reading_comprehension') {
-        return 'Note: Reading comprehension questions are typically only found in the "reading_comprehension" specialization.';
-      }
-      if (selectedQuestionType === 'aptitude' && ['typing', 'reading_comprehension'].includes(selectedSpecialization)) {
-        return 'Note: Aptitude (multiple choice) questions are typically not found in typing or reading comprehension specializations.';
-      }
-    }
-    return null;
+    // Use the shared utility function to generate the message
+    return getRecommendationMessage(selectedQuestionType, selectedSpecialization);
   };
 
   return (
@@ -248,7 +253,7 @@ const fetchQuestions = useCallback(async () => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>                  <div className="col-md-2">
-                    <label htmlFor="specialization" className="form-label">Specialization</label>
+                    <label htmlFor="specialization" className="form-label">Subject Area</label>
                     <select
                       className="form-select"
                       id="specialization"
@@ -257,13 +262,15 @@ const fetchQuestions = useCallback(async () => {
                         setSelectedSpecialization(e.target.value);
                         setPagination(prev => ({ ...prev, page: 1 }));
                       }}
-                    >
-                      {specializations.map(spec => (
+                    >                      {specializationOptions.map(spec => (
                         <option key={spec.value} value={spec.value}>
                           {spec.label}
                         </option>
                       ))}
                     </select>
+                    <div className="form-text">
+                      Filter by knowledge domain
+                    </div>
                   </div>
                   <div className="col-md-2">
                     <label htmlFor="difficulty" className="form-label">Difficulty</label>
@@ -283,8 +290,7 @@ const fetchQuestions = useCallback(async () => {
                       ))}
                     </select>
                   </div>                  <div className="col-md-3">
-                    <label htmlFor="questionType" className="form-label">Question Type</label>
-                    <select
+                    <label htmlFor="questionType" className="form-label">Question Format</label>                    <select
                       className="form-select"
                       id="questionType"
                       value={selectedQuestionType}
@@ -293,12 +299,16 @@ const fetchQuestions = useCallback(async () => {
                         setPagination(prev => ({ ...prev, page: 1 }));
                       }}
                     >
-                      <option value="">All Types</option>
-                      <option value="aptitude">Multiple Choice</option>
-                      <option value="reading_comprehension">Reading Comprehension</option>
-                      <option value="typing">Typing Test</option>
+                      {questionTypeOptions.map(type => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
                     </select>
-                  </div>                  <div className="col-md-2">
+                    <div className="form-text">
+                      Filter by question format/presentation style
+                    </div>
+                  </div><div className="col-md-2">
                     <label className="form-label">&nbsp;</label>
                     <div className="d-grid">
                       <Button 

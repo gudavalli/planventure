@@ -5,6 +5,7 @@ from models.question import Question, ReadingComprehensionSet
 def test_create_question(client, setup_database):
     """Test creating a new question"""
     data = {
+        'question_type': 'multiple_choice',
         'specialization': 'aptitude',
         'content': 'What is 2+2?',
         'options': ['3', '4', '5', '6'],
@@ -19,7 +20,9 @@ def test_create_question(client, setup_database):
 def test_create_question_invalid_data(client, setup_database):
     """Test creating a question with missing required fields"""
     data = {
-        'content': 'What is 2+2?'  # Missing specialization
+        # Missing content field completely
+        'specialization': 'aptitude',
+        'options': ['1', '2', '3', '4']
     }
     response = client.post('/api/questions',
                          data=json.dumps(data),
